@@ -177,7 +177,7 @@
         <div class="visor-header">
             <h2 id="nombreAlumnoTitulo">Estudiante</h2>
             <div class="controles-header">
-                <button class="btn-descargar" onclick="descargarProyectoAlumno()">📥 Descargar HTML</button>
+                <button class="btn-descargar" onclick="descargarProyectoAlumno()">📥 Descargar Proyecto</button>
                 <button id="btnEstadoAccion" class="btn-cambiar-estado" onclick="alternarEstadoActual()"></button>
             </div>
         </div>
@@ -222,7 +222,7 @@
             document.getElementById('errorMsg').style.display = 'none';
             
             if (SUPABASE_ANON_KEY.includes("PEGA_AQUÍ")) {
-                alert("⚠️ Contraseña correcta, pero te falta pegar tu clave larga de Supabase en la línea 205 del código.");
+                alert("⚠️ Contraseña correcta, pero te falta pegar tu clave larga de Supabase en la línea 157 del código.");
                 return;
             }
             
@@ -251,7 +251,7 @@
             }
         })
         .catch(err => {
-            alert("❌ Error de conexión con Supabase. Verifica que tu clave anónima (línea 205) sea la correcta y no tenga espacios de más.");
+            alert("❌ Error de conexión con Supabase. Verifica que tu clave anónima (línea 157) sea la correcta y no tenga espacios de más.");
             console.error(err);
         });
     }
@@ -442,6 +442,19 @@
         }
     });
 
+    // Función auxiliar para forzar la descarga de cada archivo independiente
+    function forzarDescargaArchivo(contenido, nombreArchivo, tipoMime) {
+        const blob = new Blob([contenido], { type: tipoMime });
+        const enlace = document.createElement('a');
+        enlace.href = URL.createObjectURL(blob);
+        enlace.download = nombreArchivo;
+        document.body.appendChild(enlace);
+        enlace.click();
+        document.body.removeChild(enlace);
+        URL.revokeObjectURL(enlace.href);
+    }
+
+    // Descarga por separado el HTML, CSS y JavaScript estructurado
     function descargarProyectoAlumno() {
         if (!alumnoSeleccionadoActual) return;
         
@@ -449,32 +462,27 @@
         const css = alumnoSeleccionadoActual.codigo_css || '';
         const js = alumnoSeleccionadoActual.codigo_js || '';
         
-        // Corrección del error dividiendo las etiquetas script de la descarga
-        const contenidoArchivo = `<!DOCTYPE html>
+        const nombreLimpio = alumnoSeleccionadoActual.nombre ? alumnoSeleccionadoActual.nombre.replace(/[^a-zA-Z0-9]/g, "_") : "estudiante";
+        
+        // Estructura del HTML vinculando los archivos externos CSS y JS correspondientes
+        const contenidoHtmlEstructurado = `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proyecto de ${alumnoSeleccionadoActual.nombre}</title>
-    <style>
-        ${css}
-    </style>
+    <title>Proyecto de ${alumnoSeleccionadoActual.nombre || 'Estudiante'}</title>
+    <link rel="stylesheet" href="style_${nombreLimpio}.css">
 </head>
 <body>
     ${html}
-    ` + '<' + 'script' + `>
-        ${js}
-    ` + '<' + '/script' + `>
+    <script src="script_${nombreLimpio}.js"><\/script>
 </body>
 </html>`;
 
-        const blob = new Blob([contenidoArchivo], { type: 'text/html' });
-        const enlaceDescarga = document.createElement('a');
-        const nombreLimpio = alumnoSeleccionadoActual.nombre ? alumnoSeleccionadoActual.nombre.replace(/[^a-zA-Z0-9]/g, "_") : "estudiante";
-        enlaceDescarga.download = `Proyecto_${nombreLimpio}.html`;
-        enlaceDescarga.href = URL.createObjectURL(blob);
-        enlaceDescarga.click();
-        URL.revokeObjectURL(enlaceDescarga.href);
+        // Descarga consecutiva de los tres lenguajes independientes
+        forzarDescargaArchivo(contenidoHtmlEstructurado, `index_${nombreLimpio}.html`, 'text/html');
+        forzarDescargaArchivo(css, `style_${nombreLimpio}.css`, 'text/css');
+        forzarDescargaArchivo(js, `script_${nombreLimpio}.js`, 'text/javascript');
     }
 </script>
 
