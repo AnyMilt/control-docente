@@ -75,7 +75,7 @@
 <div id="modalLogin" class="pantalla-bloqueo">
     <div class="caja-autenticacion">
         <h2 style="margin-top:0;">Iniciar Sesión</h2>
-        <p style="color:#666; font-size:13px; margin-bottom:20px;">Plataforma de Informática - Albertina Rivas</p>
+        <p style="color:#666; font-size:13px; margin-bottom:20px;">Plataforma de Informática - Albertina Rivas Mediina</p>
         <input type="text" id="loginApellidos" placeholder="Tu Cédula de Identidad">
         <input type="password" id="loginContrasena" placeholder="Tu Contraseña Personal">
         <button class="btn-primario" style="background-color: #2980b9;" onclick="loginEstudiante()">Entrar al Sistema</button>
@@ -89,18 +89,20 @@
     <div class="caja-autenticacion">
         <h2 style="margin-top:0; color:#27ae60;">Registro de Estudiante</h2>
         <p style="color:#666; font-size:13px;">Llena tus datos con cuidado en MAYÚSCULAS</p>
-        <input type="text" id="regCedula" placeholder="Cédula de Identidad">
-        <input type="text" id="regApellidos" placeholder="Apellidos Completos">
-        <input type="text" id="regNombres" placeholder="Nombres Completos">
-        <select id="regCurso">
-            <option value="TERCERO INFORMATICA A">3ro Informática A</option>
-            <option value="TERCERO INFORMATICA B">3ro Informática B</option>
-        </select>
-        <input type="password" id="regContrasena" placeholder="Crea tu Contraseña Personal">
-        <!-- Campo adicional de protección docente para ingreso en clase -->
-        <input type="password" id="regCodigoClase" style="border: 1px solid #e74c3c; background-color: #fdf2f2;" placeholder="Código Dictado por el Docente">
-        
-        <button class="btn-primario" onclick="registrarEstudiante()">Finalizar Registro</button>
+        <div id="registroCargando" style="display:block; color:#7f8c8d; font-size:13px;">Cargando formulario...</div>
+        <div id="registroFormulario" style="display:none;">
+            <input type="text" id="regCedula" placeholder="Cédula de Identidad">
+            <input type="text" id="regApellidos" placeholder="Apellidos Completos">
+            <input type="text" id="regNombres" placeholder="Nombres Completos">
+            <select id="regCurso">
+                <option value="TERCERO INFORMATICA A">3ro Informática A</option>
+                <option value="TERCERO INFORMATICA B">3ro Informática B</option>
+            </select>
+            <input type="password" id="regContrasena" placeholder="Crea tu Contraseña Personal">
+            <input type="password" id="regCodigoClase" style="border: 1px solid #e74c3c; background-color: #fdf2f2;" placeholder="Código Dictado por el Docente">
+            
+            <button class="btn-primario" onclick="registrarEstudiante()">Finalizar Registro</button>
+        </div>
         <div id="regError" class="error-msg"></div>
         <a class="enlace-cambio" onclick="alternarVentanas('LOGIN')" style="color:#666;">Volver al Inicio de Sesión</a>
     </div>
@@ -159,14 +161,33 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1ZHh3amFpbGRhZ2FxcmZla3JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTc1OTYsImV4cCI6MjA5ODkzMzU5Nn0.I3n5F8jWzuerzyz_lB79hAtjlLx3qY7pxySzgep_lz4";
     
     // =========================================================================
-    // MODIFICA ESTA CLAVE CUANDO QUIERAS CAMBIAR LA PALABRA DE PASO EN LA PIZARRA
+    // La clave de registro docente se carga desde Supabase (tabla configuracion)
     // =========================================================================
-    const CODIGO_REGISTRO_DOCENTE = "Albertina2026"; 
-    // =========================================================================
+    let config = {
+        codigo_registro_docente: null
+    };
 
     let alumnoLogueado = null;
     let listadoTrabajos = [];
     let trabajoActualId = null;
+
+    function cargarConfiguracion() {
+        return fetch(`${SUPABASE_URL}/rest/v1/configuracion?clave=eq.codigo_registro_docente&limit=1`, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            if (data.length > 0 && data[0].valor) {
+                config.codigo_registro_docente = data[0].valor;
+            }
+        })
+        .catch(err => {
+            console.error("No se pudo cargar la configuración:", err);
+        });
+    }
 
     function alternarVentanas(pantalla) {
         document.getElementById('loginError').style.display = 'none';
@@ -174,6 +195,10 @@
         if(pantalla === 'REGISTRO') {
             document.getElementById('modalLogin').style.display = 'none';
             document.getElementById('modalRegistro').style.display = 'flex';
+            cargarConfiguracion().then(() => {
+                document.getElementById('registroCargando').style.display = 'none';
+                document.getElementById('registroFormulario').style.display = 'block';
+            });
         } else {
             document.getElementById('modalLogin').style.display = 'flex';
             document.getElementById('modalRegistro').style.display = 'none';
@@ -203,7 +228,7 @@
             return;
         }
 
-        if (codigoIngresado !== CODIGO_REGISTRO_DOCENTE) {
+        if (codigoIngresado !== config.codigo_registro_docente) {
             divError.innerText = "🔒 Código de registro incorrecto. Solicítalo a tu profesor en la pizarra.";
             divError.style.display = 'block';
             return;
