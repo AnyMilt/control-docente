@@ -26,11 +26,13 @@
         .caja-login input {
             width: 100%; padding: 12px; margin: 15px 0;
             border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+            font-size: 16px; text-align: center;
         }
         .caja-login button {
             background-color: #007bff; color: white; border: none;
-            padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer;
+            padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px;
         }
+        .caja-login button:hover { background-color: #0056b3; }
         .error-login { color: red; font-size: 14px; margin-top: 10px; display: none; }
 
         /* --- SIDEBAR Y FILTROS --- */
@@ -40,14 +42,14 @@
             flex-direction: column; height: 100vh;
         }
         .sidebar-header { padding: 15px; background-color: #007bff; color: white; }
-        .sidebar-header h3 { margin: 0; }
+        .sidebar-header h3 { margin: 0; font-size: 18px; }
         
         .seccion-filtros {
             padding: 10px 15px; background-color: #f8f9fa;
             border-bottom: 1px solid #e0e0e0; display: flex; gap: 10px;
         }
         .seccion-filtros select {
-            flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;
+            flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; cursor: pointer;
         }
 
         .lista-alumnos { flex-grow: 1; overflow-y: auto; list-style: none; margin: 0; padding: 0; }
@@ -57,7 +59,7 @@
         }
         .alumno-item:hover { background-color: #e9ecef; }
         .alumno-item.seleccionado { background-color: #cfe2ff; border-left: 4px solid #007bff; }
-        .alumno-nombre { font-weight: bold; display: block; color: #333; }
+        .alumno-nombre { font-weight: bold; display: block; color: #333; font-size: 14px; padding-right: 80px; }
         .alumno-curso { font-size: 12px; color: #666; margin-top: 3px; }
         
         /* Badges de Estado */
@@ -69,37 +71,41 @@
         .badge-revisado { background-color: #d4edda; color: #155724; }
 
         /* --- VISOR CENTRAL --- */
-        .visor-codigo { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; }
+        .visor-codigo { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; background-color: #f8f9fa; }
         .visor-header {
             padding: 15px 20px; background-color: #fff;
             border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;
         }
-        .visor-header h2 { margin: 0; font-size: 18px; }
+        .visor-header h2 { margin: 0; font-size: 18px; color: #333; }
         
         .btn-cambiar-estado {
-            padding: 8px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;
+            padding: 8px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s;
         }
         .btn-marcar-revisado { background-color: #28a745; color: white; }
+        .btn-marcar-revisado:hover { background-color: #218838; }
         .btn-marcar-pendiente { background-color: #ffc107; color: #212529; }
+        .btn-marcar-pendiente:hover { background-color: #e0a800; }
 
         .area-trabajo { display: flex; flex-grow: 1; height: calc(100vh - 65px); }
         .codigos-fuente { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #e0e0e0; }
         .pestañas-codigo { display: flex; background-color: #eaeaea; }
-        .btn-pestana { padding: 10px 15px; border: none; background: none; cursor: pointer; font-weight: bold; color: #666; }
+        .btn-pestana { padding: 10px 15px; border: none; background: none; cursor: pointer; font-weight: bold; color: #666; font-size: 13px; }
         .btn-pestana.activa { background-color: #1e1e1e; color: #fff; }
         
         .contenedor-texto {
             flex-grow: 1; background-color: #1e1e1e; color: #d4d4d4; padding: 15px;
-            font-family: monospace; font-size: 14px; resize: none; border: none; outline: none; width: 100%; box-sizing: border-box; height: 100%;
+            font-family: 'Courier New', Courier, monospace; font-size: 14px; resize: none; border: none; outline: none; width: 100%; box-sizing: border-box; height: 100%;
         }
         
         .vista-previa { width: 50%; background-color: #fff; display: flex; flex-direction: column; }
+        .bar-preview { background-color: #f1f1f1; padding: 5px 10px; font-size: 12px; color: #555; border-bottom: 1px solid #ddd; }
         iframe { width: 100%; flex-grow: 1; border: none; background-color: white; }
-        .sin-seleccion { display: flex; justify-content: center; align-items: center; flex-grow: 1; color: #888; }
+        .sin-seleccion { display: flex; justify-content: center; align-items: center; flex-grow: 1; color: #888; font-size: 16px; }
     </style>
 </head>
 <body>
 
+<!-- COMPONENTE LOGIN -->
 <div id="pantallaLogin">
     <div class="caja-login">
         <h2>Panel Docente</h2>
@@ -110,13 +116,14 @@
     </div>
 </div>
 
+<!-- SIDEBAR DE SELECCIÓN -->
 <div class="sidebar">
     <div class="sidebar-header">
         <h3>Entregas de Tareas</h3>
         <small>U.E.M. Albertina Rivas Medina</small>
     </div>
     
-    <!-- NUEVOS FILTROS DE SELECCIÓN -->
+    <!-- FILTROS CRUZADOS MEJORADOS -->
     <div class="seccion-filtros">
         <select id="filtroCurso" onchange="filtrarYRenderizar()">
             <option value="TODOS">Todos los Cursos</option>
@@ -133,17 +140,19 @@
     <ul class="lista-alumnos" id="contenedorLista"></ul>
 </div>
 
+<!-- VISOR PRINCIPAL -->
 <div class="visor-codigo" id="visorCentral">
-    <div class="sin-seleccion" id="msgVacio">Selecciona un estudiante para comenzar la revisión</div>
+    <div class="sin-seleccion" id="msgVacio">Selecciona un estudiante de la lista para comenzar la revisión</div>
     
     <div id="cuerpoVisor" style="display: none; height: 100%; flex-direction: column;">
         <div class="visor-header">
             <h2 id="nombreAlumnoTitulo">Estudiante</h2>
-            <!-- BOTÓN DINÁMICO DE ESTADO -->
+            <!-- CONTROL DE ACTUALIZACIÓN DE REVISIÓN -->
             <button id="btnEstadoAccion" class="btn-cambiar-estado" onclick="alternarEstadoActual()"></button>
         </div>
         
         <div class="area-trabajo">
+            <!-- Editores del Alumno -->
             <div class="codigos-fuente">
                 <div class="pestañas-codigo">
                     <button class="btn-pestana activa" onclick="cambiarFichaCodigo('html')">HTML</button>
@@ -154,7 +163,9 @@
                     <textarea id="txtCodigoDocente" class="contenedor-texto" readonly></textarea>
                 </div>
             </div>
+            <!-- Renderizador de Códigos -->
             <div class="vista-previa">
+                <div class="bar-preview">🖥️ Vista de ejecución en vivo:</div>
                 <iframe id="iframeResultadoDocente"></iframe>
             </div>
         </div>
@@ -162,6 +173,8 @@
 </div>
 
 <script>
+    // =========================================================================
+    // REEMPLAZA CON LAS CREDENCIALES DE TU BASE DE DATOS DE SUPABASE
     // =========================================================================
     const SUPABASE_URL = "https://TU_PROYECTO_ID.supabase.co"; 
     const SUPABASE_ANON_KEY = "TU_API_KEY_ANONIMA_DE_SUPABASE";
@@ -190,33 +203,43 @@
         .then(data => {
             datosAlumnosTodos = data;
             filtrarYRenderizar();
+        })
+        .catch(err => {
+            alert("Error al conectar con Supabase. Verifica las credenciales en el código.");
+            console.error(err);
         });
     }
 
+    // LÓGICA DE FILTRADO SEGURO (TOLERA VALORES VACÍOS O NULL EN EL ESTADO)
     function filtrarYRenderizar() {
         const cursoSelected = document.getElementById('filtroCurso').value;
         const estadoSelected = document.getElementById('filtroEstado').value;
         const contenedor = document.getElementById('contenedorLista');
         contenedor.innerHTML = "";
 
-        // Aplicamos lógica de filtros cruzados
         const filtrados = datosAlumnosTodos.filter(alumno => {
+            const estadoAlumno = alumno.estado ? alumno.estado.trim() : "POR REVISAR";
+            
             const cumpleCurso = (cursoSelected === "TODOS" || alumno.paralelo === cursoSelected);
-            const cumpleEstado = (estadoSelected === "TODOS" || (alumno.estado || "POR REVISAR") === estadoSelected);
+            const cumpleEstado = (estadoSelected === "TODOS" || estadoAlumno === estadoSelected);
+            
             return cumpleCurso && cumpleEstado;
         });
 
         if(filtrados.length === 0) {
-            contenedor.innerHTML = "<li style='padding:20px; color:#888; text-align:center;'>Ninguna entrega coincide.</li>";
+            contenedor.innerHTML = "<li style='padding:20px; color:#888; text-align:center;'>Ninguna entrega coincide con los filtros.</li>";
             return;
         }
 
         filtrados.forEach((alumno) => {
             const li = document.createElement('li');
             li.className = 'alumno-item';
-            if (alumnoSeleccionadoActual && alumnoSeleccionadoActual.id === alumno.id) li.classList.add('seleccionado');
             
-            const estadoTexto = alumno.estado || "POR REVISAR";
+            if (alumnoSeleccionadoActual && alumnoSeleccionadoActual.id === alumno.id) {
+                li.classList.add('seleccionado');
+            }
+            
+            const estadoTexto = alumno.estado ? alumno.estado.trim() : "POR REVISAR";
             const estadoClass = estadoTexto === "REVISADO" ? "badge-revisado" : "badge-por-revisar";
 
             li.innerHTML = `
@@ -240,9 +263,10 @@
         document.getElementById('cuerpoVisor').style.display = 'flex';
         document.getElementById('nombreAlumnoTitulo').innerText = `${alumno.nombre} - ${alumno.paralelo}`;
         
-        // Ajustar el botón de cambio de estado
         const btnEstado = document.getElementById('btnEstadoAccion');
-        if ((alumno.estado || "POR REVISAR") === "POR REVISAR") {
+        const estadoActual = alumno.estado ? alumno.estado.trim() : "POR REVISAR";
+
+        if (estadoActual === "POR REVISAR") {
             btnEstado.innerText = "✓ Marcar como REVISADO";
             btnEstado.className = "btn-cambiar-estado btn-marcar-revisado";
         } else {
@@ -257,9 +281,9 @@
     function alternarEstadoActual() {
         if (!alumnoSeleccionadoActual) return;
 
-        const nuevoEstado = (alumnoSeleccionadoActual.estado || "POR REVISAR") === "POR REVISAR" ? "REVISADO" : "POR REVISAR";
+        const estadoActual = alumnoSeleccionadoActual.estado ? alumnoSeleccionadoActual.estado.trim() : "POR REVISAR";
+        const nuevoEstado = estadoActual === "POR REVISAR" ? "REVISADO" : "POR REVISAR";
         
-        // Hacemos el UPDATE directo a la fila en Supabase mediante su ID
         fetch(`${SUPABASE_URL}/rest/v1/entregas_tareas?id=eq.${alumnoSeleccionadoActual.id}`, {
             method: 'PATCH',
             headers: {
@@ -272,14 +296,19 @@
         })
         .then(res => res.json())
         .then(data => {
-            // Actualizar datos locales y refrescar interfaz
             alumnoSeleccionadoActual.estado = nuevoEstado;
             const index = datosAlumnosTodos.findIndex(a => a.id === alumnoSeleccionadoActual.id);
             if(index !== -1) datosAlumnosTodos[index].estado = nuevoEstado;
             
-            // Volver a evaluar el botón y refrescar la barra lateral
-            verDetalleAlumno(alumnoSeleccionadoActual, document.querySelector('.alumno-item.seleccionado'));
+            const itemSeleccionado = document.querySelector('.alumno-item.seleccionado');
+            if (itemSeleccionado) {
+                verDetalleAlumno(alumnoSeleccionadoActual, itemSeleccionado);
+            }
             filtrarYRenderizar();
+        })
+        .catch(err => {
+            alert("No se pudo actualizar el estado.");
+            console.error(err);
         });
     }
 
@@ -288,9 +317,18 @@
         const botones = document.getElementsByClassName('btn-pestana');
         for(let btn of botones) btn.classList.remove('activa');
         
-        if (ficha === 'html') { botones[0].classList.add('activa'); document.getElementById('txtCodigoDocente').value = alumnoSeleccionadoActual.codigo_html || ''; }
-        if (ficha === 'css') { botones[1].classList.add('activa'); document.getElementById('txtCodigoDocente').value = alumnoSeleccionadoActual.codigo_css || ''; }
-        if (ficha === 'js') { botones[2].classList.add('activa'); document.getElementById('txtCodigoDocente').value = alumnoSeleccionadoActual.codigo_js || ''; }
+        if (ficha === 'html') { 
+            botones[0].classList.add('activa'); 
+            document.getElementById('txtCodigoDocente').value = alumnoSeleccionadoActual.codigo_html || ''; 
+        }
+        if (ficha === 'css') { 
+            botones[1].classList.add('activa'); 
+            document.getElementById('txtCodigoDocente').value = alumnoScaleccionadoActual.codigo_css || ''; 
+        }
+        if (ficha === 'js') { 
+            botones[2].classList.add('activa'); 
+            document.getElementById('txtCodigoDocente').value = alumnoSeleccionadoActual.codigo_js || ''; 
+        }
     }
 
     function ejecutarCodigoAlumno() {
@@ -299,9 +337,23 @@
         const js = alumnoSeleccionadoActual.codigo_js || '';
         const iframe = document.getElementById('iframeResultadoDocente');
 
-        const codigoCompleto = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+        const codigoCompleto = `
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <style>${css}</style>
+            </head>
+            <body>
+                ${html}
+                <script>${js}<\/script>
+            </body>
+            </html>
+        `;
         const documentoIframe = iframe.contentDocument || iframe.contentWindow.document;
-        documentoIframe.open(); documentoIframe.write(codigoCompleto); documentoIframe.close();
+        documentoIframe.open(); 
+        documentoIframe.write(codigoCompleto); 
+        documentoIframe.close();
     }
 </script>
 
