@@ -212,7 +212,7 @@
     // CREDENCIALES DIRECTAS DE TU PROYECTO EN SUPABASE
     // =========================================================================
     const SUPABASE_URL = "https://dudxwjaildagaqrfekra.supabase.co"; 
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1ZHh3amFpbGRhZ2FxcmZla3JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTc1OTYsImV4cCI6MjA5ODkzMzU5Nn0.I3n5F8jWzuerzyz_lB79hAtjlLx3qY7pxySzgep_lz4"; // <-- PEGA TU LLAVE ANON AQUÍ
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1ZHh3amFpbGRhZ2FxcmZla3JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTc1OTYsImV4cCI6MjA5ODkzMzU5Nn0.I3n5F8jWzuerzyz_lB79hAtjlLx3qY7pxySzgep_lz4"; 
     const CONTRASENA_ACCESO = "Albertina2026"; 
     // =========================================================================
 
@@ -236,29 +236,37 @@
         })
         .then(res => res.json())
         .then(data => {
-            datosAlumnosTodos = data;
-            filtrarYRenderizar();
+            if (Array.isArray(data)) {
+                datosAlumnosTodos = data;
+                filtrarYRenderizar();
+            } else {
+                console.error("Respuesta inesperada de Supabase:", data);
+            }
         })
         .catch(err => {
-            alert("Error al conectar con Supabase. Verifica las credenciales en el código.");
+            alert("Error al conectar con Supabase. Verifica la clave API colocada en la línea 205.");
             console.error(err);
         });
     }
 
-    // LÓGICA DE FILTRADO SEGURO + BUSCADOR POR NOMBRE EN VIVO
     function filtrarYRenderizar() {
-        const busqueda = document.getElementById('txtBuscarAlumno').value.toLowerCase().trim();
+        const busquedaInput = document.getElementById('txtBuscarAlumno');
+        const busqueda = busquedaInput ? busquedaInput.value.toLowerCase().trim() : "";
+        
         const cursoSelected = document.getElementById('filtroCurso').value;
         const estadoSelected = document.getElementById('filtroEstado').value;
         const contenedor = document.getElementById('contenedorLista');
         contenedor.innerHTML = "";
 
         const filtrados = datosAlumnosTodos.filter(alumno => {
-            const estadoAlumno = alumno.estado ? alumno.estado.trim() : "POR REVISAR";
-            const nombreAlumno = alumno.nombre ? alumno.nombre.toLowerCase() : "";
+            if (!alumno) return false;
+            
+            const estadoAlumno = alumno.estado ? alumno.estado.toString().trim() : "POR REVISAR";
+            const nombreAlumno = alumno.nombre ? alumno.nombre.toString().toLowerCase() : "";
+            const paraleloAlumno = alumno.paralelo ? alumno.paralelo.toString().trim() : "";
             
             const cumpleBusqueda = busqueda === "" || nombreAlumno.includes(busqueda);
-            const cumpleCurso = (cursoSelected === "TODOS" || alumno.paralelo === cursoSelected);
+            const cumpleCurso = (cursoSelected === "TODOS" || paraleloAlumno === cursoSelected);
             const cumpleEstado = (estadoSelected === "TODOS" || estadoAlumno === estadoSelected);
             
             return cumpleBusqueda && cumpleCurso && cumpleEstado;
@@ -277,12 +285,12 @@
                 li.classList.add('seleccionado');
             }
             
-            const estadoTexto = alumno.estado ? alumno.estado.trim() : "POR REVISAR";
+            const estadoTexto = alumno.estado ? alumno.estado.toString().trim() : "POR REVISAR";
             const estadoClass = estadoTexto === "REVISADO" ? "badge-revisado" : "badge-por-revisar";
 
             li.innerHTML = `
-                <span class="alumno-nombre">${alumno.nombre}</span>
-                <span class="alumno-curso">${alumno.paralelo}</span>
+                <span class="alumno-nombre">${alumno.nombre || 'Sin nombre'}</span>
+                <span class="alumno-curso">${alumno.paralelo || ''}</span>
                 <span class="badge-estado ${estadoClass}">${estadoTexto}</span>
             `;
             li.addEventListener('click', () => verDetalleAlumno(alumno, li));
@@ -299,10 +307,10 @@
         
         document.getElementById('msgVacio').style.display = 'none';
         document.getElementById('cuerpoVisor').style.display = 'flex';
-        document.getElementById('nombreAlumnoTitulo').innerText = `${alumno.nombre} - ${alumno.paralelo}`;
+        document.getElementById('nombreAlumnoTitulo').innerText = `${alumno.nombre || 'Estudiante'} - ${alumno.paralelo || ''}`;
         
         const btnEstado = document.getElementById('btnEstadoAccion');
-        const estadoActual = alumno.estado ? alumno.estado.trim() : "POR REVISAR";
+        const estadoActual = alumno.estado ? alumno.estado.toString().trim() : "POR REVISAR";
 
         if (estadoActual === "POR REVISAR") {
             btnEstado.innerText = "✓ Marcar como REVISADO";
@@ -319,7 +327,7 @@
     function alternarEstadoActual() {
         if (!alumnoSeleccionadoActual) return;
 
-        const estadoActual = alumnoSeleccionadoActual.estado ? alumnoSeleccionadoActual.estado.trim() : "POR REVISAR";
+        const estadoActual = alumnoSeleccionadoActual.estado ? alumnoSeleccionadoActual.estado.toString().trim() : "POR REVISAR";
         const nuevoEstado = estadoActual === "POR REVISAR" ? "REVISADO" : "POR REVISAR";
         
         fetch(`${SUPABASE_URL}/rest/v1/entregas_tareas?id=eq.${alumnoSeleccionadoActual.id}`, {
@@ -355,6 +363,8 @@
         const botones = document.getElementsByClassName('btn-pestana');
         for(let btn of botones) btn.classList.remove('activa');
         
+        if (!alumnoSeleccionadoActual) return;
+
         if (ficha === 'html') { 
             botones[0].classList.add('activa'); 
             document.getElementById('txtCodigoDocente').value = alumnoSeleccionadoActual.codigo_html || ''; 
@@ -370,17 +380,19 @@
     }
 
     function ejecutarCodigoAlumno() {
+        if (!alumnoSeleccionadoActual) return;
+
         const html = alumnoSeleccionadoActual.codigo_html || '';
         const css = alumnoSeleccionadoActual.codigo_css || '';
         const js = alumnoSeleccionadoActual.codigo_js || '';
         const iframe = document.getElementById('iframeResultadoDocente');
         const consola = document.getElementById('consolaErroresJS');
         
-        // Limpiar consola previa
-        consola.innerHTML = "<span class='consola-ok'>✓ Consola activa: Sin errores detectados</span>";
-        consola.classList.remove('visible');
+        if(consola) {
+            consola.innerHTML = "<span class='consola-ok'>✓ Consola activa: Sin errores detectados</span>";
+            consola.classList.remove('visible');
+        }
 
-        // Código inyectado para interceptar y reportar errores en la consola del docente
         const scriptCapturador = `
             <script>
                 window.onerror = function(message, source, lineno, colno, error) {
@@ -414,16 +426,16 @@
         documentoIframe.close();
     }
 
-    // Escuchador global de mensajes para la consola de errores de JavaScript
     window.addEventListener('message', function(evento) {
         if (evento.data && evento.data.tipo === 'error_js') {
             const consola = document.getElementById('consolaErroresJS');
-            consola.innerHTML = `⚠️ <b>Error en JS del Estudiante:</b> ${evento.data.msg} <br> 📍 <b>Línea aproximada:</b> ${evento.data.linea}`;
-            consola.classList.add('visible');
+            if (consola) {
+                consola.innerHTML = `⚠️ <b>Error en JS del Estudiante:</b> ${evento.data.msg} <br> 📍 <b>Línea aproximada:</b> ${evento.data.linea}`;
+                consola.classList.add('visible');
+            }
         }
     });
 
-    // FUNCIÓN DE DESCARGA DIRECTA DE TRABAJO LOCAL
     function descargarProyectoAlumno() {
         if (!alumnoSeleccionadoActual) return;
         
@@ -438,17 +450,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proyecto de ${alumnoSeleccionadoActual.nombre}</title>
     <style>
-        /* --- CÓDIGO CSS DEL ALUMNO --- */
         ${css}
     </style>
 </head>
 <body>
-
-    <!-- --- CÓDIGO HTML DEL ALUMNO --- -->
     ${html}
-
     <script>
-        // --- CÓDIGO JS DEL ALUMNO ---
         ${js}
     </script>
 </body>
@@ -456,8 +463,7 @@
 
         const blob = new Blob([contenidoArchivo], { type: 'text/html' });
         const enlaceDescarga = document.createElement('a');
-        
-        const nombreLimpio = alumnoSeleccionadoActual.nombre.replace(/[^a-zA-Z0-9]/g, "_");
+        const nombreLimpio = alumnoSeleccionadoActual.nombre ? alumnoSeleccionadoActual.nombre.replace(/[^a-zA-Z0-9]/g, "_") : "estudiante";
         enlaceDescarga.download = `Proyecto_${nombreLimpio}.html`;
         enlaceDescarga.href = URL.createObjectURL(blob);
         enlaceDescarga.click();
