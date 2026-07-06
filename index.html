@@ -3,488 +3,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Docente - U.E.M. Albertina Rivas Medina</title>
+    <title>Panel de Control Docente - U.E.M. Albertina Rivas Medina</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 0; padding: 0;
-            background-color: #f4f7f6;
-            height: 100vh; display: flex;
+            font-family: Arial, sans-serif; margin: 0; padding: 0;
+            background-color: #f5f6fa; height: 100vh; display: flex; flex-direction: column;
         }
         
-        /* --- LOGIN --- */
-        #pantallaLogin {
+        /* --- VENTANA DE LOGIN DOCENTE (PANTALLA DE BLOQUEO) --- */
+        .pantalla-bloqueo {
             position: fixed; top:0; left:0; width:100vw; height:100vh;
-            background-color: #1e1e24; display: flex;
-            justify-content: center; align-items: center; z-index: 9999;
+            background-color: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 9999;
         }
-        .caja-login {
-            background-color: #fff; padding: 40px; border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center;
-            max-width: 350px; width: 100%;
+        .caja-autenticacion {
+            background-color: #fff; padding: 35px; border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; max-width: 360px; width: 100%;
         }
-        .caja-login input {
-            width: 100%; padding: 12px; margin: 15px 0;
-            border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
-            font-size: 16px; text-align: center;
+        .caja-autenticacion input {
+            width: 100%; padding: 11px; margin: 15px 0;
+            border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; text-align: center;
         }
-        .caja-login button {
-            background-color: #007bff; color: white; border: none;
-            padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px;
+        .btn-primario {
+            background-color: #e74c3c; color: white; border: none; padding: 12px;
+            width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px;
         }
-        .caja-login button:hover { background-color: #0056b3; }
-        .error-login { color: red; font-size: 14px; margin-top: 10px; display: none; }
+        .btn-primario:hover { background-color: #c0392b; }
+        .error-msg { color: #c0392b; font-size: 14px; margin-top: 10px; display: none; font-weight: bold; }
 
-        /* --- SIDEBAR Y FILTROS --- */
-        .sidebar {
-            width: 320px; background-color: #fff;
-            border-right: 1px solid #e0e0e0; display: flex;
-            flex-direction: column; height: 100vh;
+        /* --- ENCABEZADO --- */
+        header {
+            background-color: #2c3e50; color: white; padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .sidebar-header { padding: 15px; background-color: #007bff; color: white; }
-        .sidebar-header h3 { margin: 0; font-size: 18px; }
-        
-        .contenedor-busqueda-filtros {
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 10px 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .txt-buscar {
-            width: 100%; padding: 8px 12px; border: 1px solid #ccc;
-            border-radius: 4px; font-size: 13px; box-sizing: border-box;
-        }
-        .seccion-filtros { display: flex; gap: 8px; }
-        .seccion-filtros select {
-            flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; cursor: pointer;
-        }
+        header h1 { margin: 0; font-size: 20px; }
+        .filtro-curso { padding: 8px 12px; font-size: 14px; border-radius: 4px; border: none; font-weight: bold; }
 
-        .lista-alumnos { flex-grow: 1; overflow-y: auto; list-style: none; margin: 0; padding: 0; }
-        .alumno-item {
-            padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer;
-            position: relative; transition: 0.2s;
-        }
-        .alumno-item:hover { background-color: #e9ecef; }
-        .alumno-item.seleccionado { background-color: #cfe2ff; border-left: 4px solid #007bff; }
-        .alumno-nombre { font-weight: bold; display: block; color: #333; font-size: 14px; padding-right: 85px; }
-        .alumno-curso { font-size: 12px; color: #666; margin-top: 3px; }
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .contenedor-principal { display: flex; flex-grow: 1; height: calc(100vh - 62px); overflow: hidden; }
+
+        /* Panel Izquierdo: Lista Alumnos y Proyectos */
+        .panel-lateral { width: 320px; background-color: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; }
+        .seccion-lista { flex-grow: 1; overflow-y: auto; border-bottom: 1px solid #e0e0e0; }
+        .seccion-lista h3 { padding: 12px 15px; margin: 0; background-color: #f8f9fa; font-size: 12px; color: #7f8c8d; text-transform: uppercase; border-bottom: 1px solid #e0e0e0; }
         
+        .item-alumno { padding: 12px 15px; border-bottom: 1px solid #f1f1f1; cursor: pointer; transition: 0.2s; }
+        .item-alumno:hover { background-color: #f5f6fa; }
+        .item-alumno.seleccionado { background-color: #e8f4fd; border-left: 4px solid #3498db; }
+        .alumno-nombre { font-weight: bold; font-size: 14px; color: #2c3e50; }
+        .alumno-detalles { font-size: 11px; color: #7f8c8d; margin-top: 2px; }
+
+        .lista-entregas { list-style: none; margin: 0; padding: 0; }
+        .item-entrega { padding: 10px 15px; border-bottom: 1px solid #f1f1f1; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .item-entrega:hover { background-color: #f9f9f9; }
+        .item-entrega.seleccionada { background-color: #dff9fb; font-weight: bold; }
+
+        /* Área de Revisión Derecha */
+        .area-revision { flex-grow: 1; display: flex; flex-direction: column; background-color: #fafafa; }
+        .sin-seleccion { flex-grow: 1; display: flex; justify-content: center; align-items: center; color: #95a5a6; font-size: 16px; flex-direction: column; }
+        
+        .panel-trabajo { display: flex; flex-grow: 1; flex-direction: column; height: 100%; }
+        .split-v { display: flex; flex-grow: 1; height: 65%; border-bottom: 1px solid #e0e0e0; }
+        
+        /* Visores de Código */
+        .col-codigo { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #e0e0e0; }
+        .pestañas-codigo { display: flex; background-color: #1e1e1e; border-bottom: 1px solid #333; }
+        .tab-btn { background: none; border: none; color: #888; padding: 8px 16px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .tab-btn.activo { background-color: #2d2d2d; color: #fff; border-bottom: 2px solid #3498db; }
+        .code-viewer { flex-grow: 1; background-color: #1e1e1e; color: #d4d4d4; padding: 12px; font-family: monospace; font-size: 13px; border: none; outline: none; resize: none; overflow-y: auto; white-space: pre-wrap; }
+
+        /* Ejecución en Vivo */
+        .col-preview { width: 50%; display: flex; flex-direction: column; background-color: #fff; }
+        .preview-label { background-color: #eaeaea; padding: 6px 12px; font-size: 12px; color: #555; font-weight: bold; }
+        iframe { width: 100%; flex-grow: 1; border: none; background: white; }
+
+        /* Panel de Calificación Inferior */
+        .panel-evaluacion { height: 35%; background-color: #fff; padding: 15px; box-sizing: border-box; display: flex; gap: 20px; }
+        .box-comentarios { flex-grow: 1; display: flex; flex-direction: column; }
+        .box-comentarios label { font-weight: bold; font-size: 13px; color: #2c3e50; margin-bottom: 6px; }
+        .box-comentarios textarea { flex-grow: 1; border: 1px solid #ccc; border-radius: 4px; padding: 10px; font-size: 13px; resize: none; outline: none; }
+        
+        .box-acciones { width: 250px; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+        .btn-docente { padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; color: white; text-align: center; }
+        .btn-revisar { background-color: #27ae60; }
+        .btn-revisar:hover { background-color: #219653; }
+        .btn-desbloquear { background-color: #e67e22; }
+        .btn-desbloquear:hover { background-color: #d35400; }
+
         /* Badges de Estado */
-        .badge-estado {
-            position: absolute; top: 15px; right: 15px;
-            font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: bold;
-        }
-        .badge-por-revisar { background-color: #fff3cd; color: #856404; }
-        .badge-revisado { background-color: #d4edda; color: #155724; }
-
-        /* --- VISOR CENTRAL --- */
-        .visor-codigo { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; background-color: #f8f9fa; }
-        .visor-header {
-            padding: 15px 20px; background-color: #fff;
-            border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;
-        }
-        .visor-header h2 { margin: 0; font-size: 18px; color: #333; }
-        .controles-header { display: flex; gap: 10px; align-items: center; }
-        
-        .btn-cambiar-estado {
-            padding: 8px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s;
-        }
-        .btn-marcar-revisado { background-color: #28a745; color: white; }
-        .btn-marcar-revisado:hover { background-color: #218838; }
-        .btn-marcar-pendiente { background-color: #ffc107; color: #212529; }
-        .btn-marcar-pendiente:hover { background-color: #e0a800; }
-        
-        .btn-descargar {
-            background-color: #6c757d; color: white; border: none; padding: 8px 12px;
-            border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s;
-        }
-        .btn-descargar:hover { background-color: #5a6268; }
-
-        .area-trabajo { display: flex; flex-grow: 1; height: calc(100vh - 65px); overflow: hidden; }
-        .codigos-fuente { width: 50%; display: flex; flex-direction: column; border-right: 1px solid #e0e0e0; }
-        .pestañas-codigo { display: flex; background-color: #eaeaea; }
-        .btn-pestana { padding: 10px 15px; border: none; background: none; cursor: pointer; font-weight: bold; color: #666; font-size: 13px; }
-        .btn-pestana.activa { background-color: #1e1e1e; color: #fff; }
-        
-        .contenedor-texto {
-            flex-grow: 1; background-color: #1e1e1e; color: #d4d4d4; padding: 15px;
-            font-family: 'Courier New', Courier, monospace; font-size: 14px; resize: none; border: none; outline: none; width: 100%; box-sizing: border-box; height: 100%;
-        }
-        
-        .vista-previa { width: 50%; background-color: #fff; display: flex; flex-direction: column; }
-        .bar-preview { background-color: #f1f1f1; padding: 5px 10px; font-size: 12px; color: #555; border-bottom: 1px solid #ddd; }
-        iframe { width: 100%; flex-grow: 1; border: none; background-color: white; }
-        
-        /* Consola de Errores integrada */
-        .consola-errores {
-            background-color: #1c1c1c; color: #ff6b6b; font-family: monospace;
-            font-size: 12px; max-height: 120px; overflow-y: auto; padding: 10px;
-            border-top: 2px solid #ff4757; box-sizing: border-box; display: none;
-        }
-        .consola-errores.visible { display: block; }
-        .consola-ok { color: #2ed573; }
-
-        .sin-seleccion { display: flex; justify-content: center; align-items: center; flex-grow: 1; color: #888; font-size: 16px; }
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-pendiente { background-color: #ffeaa7; color: #d35400; }
+        .badge-revisado { background-color: #badc58; color: #27ae60; }
     </style>
 </head>
 <body>
 
-<!-- COMPONENTE LOGIN -->
-<div id="pantallaLogin">
-    <div class="caja-login">
-        <h2>Panel Docente</h2>
-        <p style="color:#666; font-size:13px;">Clave de acceso de la Albertina Rivas</p>
-        <input type="password" id="claveProfesor" placeholder="Contraseña" onkeydown="if(event.key==='Enter') verificarLogin()">
-        <button onclick="verificarLogin()">Ingresar</button>
-        <div id="errorMsg" class="error-login">❌ Contraseña incorrecta</div>
+<!-- VENTANA LOGIN DOCENTE -->
+<div id="modalLoginDocente" class="pantalla-bloqueo">
+    <div class="caja-autenticacion">
+        <h2 style="margin-top:0; color:#2c3e50;">Acceso Administrativo</h2>
+        <p style="color:#666; font-size:13px;">Panel de Control Docente - Informática</p>
+        <input type="password" id="txtClaveMaestra" placeholder="Introduce la Clave Docente" onkeydown="if(event.key === 'Enter') loginDocente()">
+        <button class="btn-primario" onclick="loginDocente()">Acceder al Panel</button>
+        <div id="loginError" class="error-msg">❌ Clave incorrecta. Inténtalo de nuevo.</div>
     </div>
 </div>
 
-<!-- SIDEBAR DE SELECCIÓN -->
-<div class="sidebar">
-    <div class="sidebar-header">
-        <h3>Entregas de Tareas</h3>
-        <small>U.E.M. Albertina Rivas Medina</small>
+<!-- INTERFAZ DEL ENTORNO DOCENTE -->
+<header>
+    <h1>Panel Docente - U.E.M. Albertina Rivas Medina</h1>
+    <div>
+        <select id="filtroCurso" class="filtro-curso" onchange="cargarAlumnos()">
+            <option value="TERCERO INFORMATICA A">3ro Informática A</option>
+            <option value="TERCERO INFORMATICA B">3ro Informática B</option>
+        </select>
     </div>
-    
-    <!-- BARRA DE BÚSQUEDA Y FILTROS -->
-    <div class="contenedor-busqueda-filtros">
-        <input type="text" id="txtBuscarAlumno" class="txt-buscar" placeholder="🔍 Buscar estudiante por nombre..." oninput="filtrarYRenderizar()">
-        <div class="seccion-filtros">
-            <select id="filtroCurso" onchange="filtrarYRenderizar()">
-                <option value="TODOS">Todos los Cursos</option>
-                <option value="TERCERO INFORMATICA A">3ro Informática A</option>
-                <option value="TERCERO INFORMATICA B">3ro Informática B</option>
-            </select>
-            <select id="filtroEstado" onchange="filtrarYRenderizar()">
-                <option value="TODOS">Todos los Estados</option>
-                <option value="POR REVISAR">Por Revisar</option>
-                <option value="REVISADO">Revisados</option>
-            </select>
+</header>
+
+<div class="contenedor-principal">
+    <!-- PANEL LATERAL: ALUMNOS Y ENTREGAS -->
+    <div class="panel-lateral">
+        <div class="seccion-lista" style="height: 50%;">
+            <h3>Estudiantes Registrados</h3>
+            <div id="listaAlumnos"></div>
+        </div>
+        <div class="seccion-lista" style="height: 50%;">
+            <h3>Historial de Proyectos</h3>
+            <ul id="listaProyectos" class="lista-entregas"></ul>
         </div>
     </div>
 
-    <ul class="lista-alumnos" id="contenedorLista"></ul>
-</div>
-
-<!-- VISOR PRINCIPAL -->
-<div class="visor-codigo" id="visorCentral">
-    <div class="sin-seleccion" id="msgVacio">Selecciona un estudiante de la lista para comenzar la revisión</div>
-    
-    <div id="cuerpoVisor" style="display: none; height: 100%; flex-direction: column;">
-        <div class="visor-header">
-            <h2 id="nombreAlumnoTitulo">Estudiante</h2>
-            <div class="controles-header">
-                <button class="btn-descargar" onclick="descargarProyectoAlumno()">📥 Descargar Proyecto</button>
-                <button id="btnEstadoAccion" class="btn-cambiar-estado" onclick="alternarEstadoActual()"></button>
-            </div>
+    <!-- AREA DE TRABAJO: VISOR Y EVALUACIÓN -->
+    <div id="areaRevision" class="area-revision">
+        <div class="sin-seleccion" id="vistaVacia">
+            <span style="font-size: 40px; margin-bottom: 10px;">📋</span>
+            Selecciona un estudiante y un proyecto para empezar la revisión en tiempo real.
         </div>
-        
-        <div class="area-trabajo">
-            <div class="codigos-fuente">
-                <div class="pestañas-codigo">
-                    <button class="btn-pestana activa" onclick="cambiarFichaCodigo('html')">HTML</button>
-                    <button class="btn-pestana" onclick="cambiarFichaCodigo('css')">CSS</button>
-                    <button class="btn-pestana" onclick="cambiarFichaCodigo('js')">JS</button>
+
+        <div class="panel-trabajo" id="vistaTrabajo" style="display: none;">
+            <div class="split-v">
+                <div class="col-codigo">
+                    <div class="pestañas-codigo">
+                        <button class="tab-btn activo" id="btnHtml" onclick="cambiarPestaña('HTML')">HTML</button>
+                        <button class="tab-btn" id="btnCss" onclick="cambiarPestaña('CSS')">CSS</button>
+                        <button class="tab-btn" id="btnJs" onclick="cambiarPestaña('JS')">JavaScript</button>
+                    </div>
+                    <pre id="editorCodigo" class="code-viewer"></pre>
                 </div>
-                <div style="flex-grow: 1; height: 100%;">
-                    <textarea id="txtCodigoDocente" class="contenedor-texto" readonly></textarea>
+                <div class="col-preview">
+                    <div class="preview-label">🖥️ Ejecución del Código de Alumno:</div>
+                    <iframe id="previewIframe"></iframe>
                 </div>
             </div>
-            <div class="vista-previa">
-                <div class="bar-preview">🖥️ Vista de ejecución en vivo:</div>
-                <iframe id="iframeResultadoDocente"></iframe>
-                <div id="consolaErroresJS" class="consola-errores"></div>
+            
+            <div class="panel-evaluacion">
+                <div class="box-comentarios">
+                    <label id="lblEvaluacion">Retroalimentación para el Alumno:</label>
+                    <textarea id="txtObservacionesDocente" placeholder="Escribe aquí las correcciones, felicitaciones o sugerencias de mejora..."></textarea>
+                </div>
+                <div class="box-acciones">
+                    <div style="text-align: center; margin-bottom: 5px;">
+                        <span>Estado: </span><span id="lblEstadoProyecto" class="badge">PENDIENTE</span>
+                    </div>
+                    <button class="btn-docente btn-revisar" onclick="actualizarEstadoEntrega('REVISADO')">✔️ Aprobar y Bloquear</button>
+                    <button class="btn-docente btn-desbloquear" onclick="actualizarEstadoEntrega('POR REVISAR')">🔓 Devolver para Corrección</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // =========================================================================
-    // CREDENCIALES DIRECTAS DE TU PROYECTO EN SUPABASE
-    // =========================================================================
-    const SUPABASE_URL = "https://dudxwjaildagaqrfekra.supabase.co"; 
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1ZHh3amFpbGRhZ2FxcmZla3JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTc1OTYsImV4cCI6MjA5ODkzMzU5Nn0.I3n5F8jWzuerzyz_lB79hAtjlLx3qY7pxySzgep_lz4"; 
-    const CONTRASENA_ACCESO = "Albertina2026"; 
-    // =========================================================================
+    const SUPABASE_URL = "https://dudxwjaildagaqrfekra.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1ZHh3amFpbGRhZ2FxcmZla3JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTc1OTYsImV4cCI6MjA5ODkzMzU5Nn0.I3n5F8jWzuerzyz_lB79hAtjlLx3qY7pxySzgep_lz4";
 
-    let datosAlumnosTodos = [];
-    let alumnoSeleccionadoActual = null;
-    let fichaCodigoActual = 'html';
+    // Clave de seguridad del panel administrativo
+    const CLAVE_MAESTRA_DOCENTE = "Albertina2026";
 
-    function verificarLogin() {
-        const passwordIngresada = document.getElementById('claveProfesor').value.trim();
-        
-        if (passwordIngresada === CONTRASENA_ACCESO) {
-            document.getElementById('errorMsg').style.display = 'none';
-            
-            if (SUPABASE_ANON_KEY.includes("PEGA_AQUÍ")) {
-                alert("⚠️ Contraseña correcta, pero te falta pegar tu clave larga de Supabase en la línea 157 del código.");
-                return;
-            }
-            
-            document.getElementById('pantallaLogin').style.display = 'none';
-            cargarEntregasDesdeSupabase();
+    let alumnos = [];
+    let entregas = [];
+    let alumnoSeleccionado = null;
+    let entregaSeleccionada = null;
+    let pestañaActiva = 'HTML';
+
+    // VALIDAR INICIO DE SESIÓN ADMINISTRATIVO
+    function loginDocente() {
+        const claveIngresada = document.getElementById('txtClaveMaestra').value.trim();
+        const divError = document.getElementById('loginError');
+
+        if(claveIngresada === CLAVE_MAESTRA_DOCENTE) {
+            document.getElementById('modalLoginDocente').style.display = 'none';
+            cargarAlumnos(); // Descarga los datos iniciales una vez autenticado
         } else {
-            document.getElementById('errorMsg').style.display = 'block';
+            divError.style.display = 'block';
         }
     }
 
-    function cargarEntregasDesdeSupabase() {
-        fetch(`${SUPABASE_URL}/rest/v1/entregas_tareas?order=id.desc`, {
-            method: 'GET',
+    // OBTENER ALUMNOS FILTRADOS POR PARALELO DESDE LA TABLA LIMPIA
+    function cargarAlumnos() {
+        const curso = document.getElementById('filtroCurso').value;
+        
+        fetch(`${SUPABASE_URL}/rest/v1/alumnos?paralelo=eq.${encodeURIComponent(curso)}&order=apellidos.asc`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-        })
-        .then(res => {
-            if(!res.ok) { throw new Error("Error de respuesta de red"); }
-            return res.json();
-        })
-        .then(data => {
-            if (Array.isArray(data)) {
-                datosAlumnosTodos = data;
-                filtrarYRenderizar();
-            } else {
-                console.error("Respuesta inesperada de Supabase:", data);
-            }
-        })
-        .catch(err => {
-            alert("❌ Error de conexión con Supabase. Verifica que tu clave anónima (línea 157) sea la correcta y no tenga espacios de más.");
-            console.error(err);
-        });
-    }
-
-    function filtrarYRenderizar() {
-        const busquedaInput = document.getElementById('txtBuscarAlumno');
-        const busqueda = busquedaInput ? busquedaInput.value.toLowerCase().trim() : "";
-        
-        const cursoSelected = document.getElementById('filtroCurso').value;
-        const estadoSelected = document.getElementById('filtroEstado').value;
-        const contenedor = document.getElementById('contenedorLista');
-        contenedor.innerHTML = "";
-
-        const filtrados = datosAlumnosTodos.filter(alumno => {
-            if (!alumno) return false;
-            
-            const estadoAlumno = alumno.estado ? alumno.estado.toString().trim() : "POR REVISAR";
-            const nombreAlumno = alumno.nombre ? alumno.nombre.toString().toLowerCase() : "";
-            const paraleloAlumno = alumno.paralelo ? alumno.paralelo.toString().trim() : "";
-            
-            const cumpleBusqueda = busqueda === "" || nombreAlumno.includes(busqueda);
-            const cumpleCurso = (cursoSelected === "TODOS" || paraleloAlumno === cursoSelected);
-            const cumpleEstado = (estadoSelected === "TODOS" || estadoAlumno === estadoSelected);
-            
-            return cumpleBusqueda && cumpleCurso && cumpleEstado;
-        });
-
-        if(filtrados.length === 0) {
-            contenedor.innerHTML = "<li style='padding:20px; color:#888; text-align:center;'>Ningún estudiante coincide.</li>";
-            return;
-        }
-
-        filtrados.forEach((alumno) => {
-            const li = document.createElement('li');
-            li.className = 'alumno-item';
-            
-            if (alumnoSeleccionadoActual && alumnoSeleccionadoActual.id === alumno.id) {
-                li.classList.add('seleccionado');
-            }
-            
-            const estadoTexto = alumno.estado ? alumno.estado.toString().trim() : "POR REVISAR";
-            const estadoClass = estadoTexto === "REVISADO" ? "badge-revisado" : "badge-por-revisar";
-
-            li.innerHTML = `
-                <span class="alumno-nombre">${alumno.nombre || 'Sin nombre'}</span>
-                <span class="alumno-curso">${alumno.paralelo || ''}</span>
-                <span class="badge-estado ${estadoClass}">${estadoTexto}</span>
-            `;
-            li.addEventListener('click', () => verDetalleAlumno(alumno, li));
-            contenedor.appendChild(li);
-        });
-    }
-
-    function verDetalleAlumno(alumno, elementoLista) {
-        const items = document.getElementsByClassName('alumno-item');
-        for(let item of items) item.classList.remove('seleccionado');
-        elementoLista.classList.add('seleccionado');
-
-        alumnoSeleccionadoActual = alumno;
-        
-        document.getElementById('msgVacio').style.display = 'none';
-        document.getElementById('cuerpoVisor').style.display = 'flex';
-        document.getElementById('nombreAlumnoTitulo').innerText = `${alumno.nombre || 'Estudiante'} - ${alumno.paralelo || ''}`;
-        
-        const btnEstado = document.getElementById('btnEstadoAccion');
-        const estadoActual = alumno.estado ? alumno.estado.toString().trim() : "POR REVISAR";
-
-        if (estadoActual === "POR REVISAR") {
-            btnEstado.innerText = "✓ Marcar como REVISADO";
-            btnEstado.className = "btn-cambiar-estado btn-marcar-revisado";
-        } else {
-            btnEstado.innerText = "⟲ Volver a POR REVISAR";
-            btnEstado.className = "btn-cambiar-estado btn-marcar-pendiente";
-        }
-
-        cambiarFichaCodigo(fichaCodigoActual);
-        ejecutarCodigoAlumno();
-    }
-
-    function alternarEstadoActual() {
-        if (!alumnoSeleccionadoActual) return;
-
-        const estadoActual = alumnoSeleccionadoActual.estado ? alumnoSeleccionadoActual.estado.toString().trim() : "POR REVISAR";
-        const nuevoEstado = estadoActual === "POR REVISAR" ? "REVISADO" : "POR REVISAR";
-        
-        fetch(`${SUPABASE_URL}/rest/v1/entregas_tareas?id=eq.${alumnoSeleccionadoActual.id}`, {
-            method: 'PATCH',
-            headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
-            },
-            body: JSON.stringify({ estado: nuevoEstado })
         })
         .then(res => res.json())
         .then(data => {
-            alumnoSeleccionadoActual.estado = nuevoEstado;
-            const index = datosAlumnosTodos.findIndex(a => a.id === alumnoSeleccionadoActual.id);
-            if(index !== -1) datosAlumnosTodos[index].estado = nuevoEstado;
+            alumnos = data || [];
+            renderAlumnos();
+            limpiarVistaTrabajo();
+        });
+    }
+
+    function renderAlumnos() {
+        const contenedor = document.getElementById('listaAlumnos');
+        contenedor.innerHTML = "";
+
+        if(alumnos.length === 0) {
+            contenedor.innerHTML = `<p style="padding: 15px; font-size:13px; color:#95a5a6; text-align:center;">Ningún alumno registrado en este paralelo.</p>`;
+            return;
+        }
+
+        alumnos.forEach(al => {
+            const div = document.createElement('div');
+            div.className = `item-alumno ${alumnoSeleccionado && alumnoSeleccionado.id === al.id ? 'seleccionado' : ''}`;
+            div.innerHTML = `<div class="alumno-nombre">${al.apellidos}, ${al.nombres}</div>
+                             <div class="alumno-detalles">🔑 Contraseña: <b>${al.contrasena || 'S/N'}</b></div>`;
+            div.onclick = () => seleccionarAlumno(al);
+            contenedor.appendChild(div);
+        });
+    }
+
+    function seleccionarAlumno(al) {
+        alumnoSeleccionado = al;
+        renderAlumnos();
+        document.getElementById('listaProyectos').innerHTML = `<p style="padding: 15px; font-size:12px; color:#7f8c8d;">Buscando entregas...</p>`;
+        
+        fetch(`${SUPABASE_URL}/rest/v1/entregas_tareas?alumno_id=eq.${al.id}&order=id.desc`, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+            entregas = data || [];
+            renderEntregas();
+        });
+    }
+
+    function renderEntregas() {
+        const ul = document.getElementById('listaProyectos');
+        ul.innerHTML = "";
+
+        if(entregas.length === 0) {
+            ul.innerHTML = `<p style="padding: 15px; font-size:12px; color:#95a5a6; text-align:center;">El estudiante no ha enviado proyectos.</p>`;
+            limpiarVistaTrabajo();
+            return;
+        }
+
+        entregas.forEach((ent, index) => {
+            const li = document.createElement('li');
+            li.className = `item-entrega ${entregaSeleccionada && entregaSeleccionada.id === ent.id ? 'seleccionada' : ''}`;
             
-            const itemSeleccionado = document.querySelector('.alumno-item.seleccionado');
-            if (itemSeleccionado) {
-                verDetalleAlumno(alumnoSeleccionadoActual, itemSeleccionado);
-            }
-            filtrarYRenderizar();
+            const badgeClass = ent.estado === 'REVISADO' ? 'badge-revisado' : 'badge-pendiente';
+            const badgeTexto = ent.estado === 'REVISADO' ? 'Revisado' : 'Pendiente';
+            
+            li.innerHTML = `<span>Proyecto #${entregas.length - index}</span>
+                            <span class="badge ${badgeClass}">${badgeTexto}</span>`;
+            li.onclick = () => cargarProyectoEnVisor(ent);
+            ul.appendChild(li);
+        });
+    }
+
+    function cargarProyectoEnVisor(ent) {
+        entregaSeleccionada = ent;
+        renderEntregas();
+
+        document.getElementById('vistaVacia').style.display = 'none';
+        document.getElementById('vistaTrabajo').style.display = 'flex';
+
+        document.getElementById('lblEvaluacion').innerText = `Retroalimentación para: ${alumnoSeleccionado.apellidos} (Proyecto ID: ${ent.id})`;
+        document.getElementById('txtObservacionesDocente').value = ent.observaciones || "";
+        
+        const lblEstado = document.getElementById('lblEstadoProyecto');
+        lblEstado.innerText = ent.estado || "POR REVISAR";
+        lblEstado.className = `badge ${ent.estado === 'REVISADO' ? 'badge-revisado' : 'badge-pendiente'}`;
+
+        cambiarPestaña(pestañaActiva);
+        renderIframe();
+    }
+
+    function cambiarPestaña(tipo) {
+        pestañaActiva = tipo;
+        document.getElementById('btnHtml').classList.remove('activo');
+        document.getElementById('btnCss').classList.remove('activo');
+        document.getElementById('btnJs').classList.remove('activo');
+
+        const editor = document.getElementById('editorCodigo');
+
+        if(tipo === 'HTML') {
+            document.getElementById('btnHtml').classList.add('activo');
+            editor.textContent = entregaSeleccionada.codigo_html || '<!-- Sin código HTML -->';
+        } else if(tipo === 'CSS') {
+            document.getElementById('btnCss').classList.add('activo');
+            editor.textContent = entregaSeleccionada.codigo_css || '/* Sin código CSS */';
+        } else if(tipo === 'JS') {
+            document.getElementById('btnJs').classList.add('activo');
+            editor.textContent = entregaSeleccionada.codigo_js || '// Sin código JavaScript';
+        }
+    }
+
+    function renderIframe() {
+        const iframe = document.getElementById('previewIframe');
+        const html = entregaSeleccionada.codigo_html || '';
+        const css = entregaSeleccionada.codigo_css || '';
+        const js = entregaSeleccionada.codigo_js || '';
+        
+        const src = `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open(); doc.write(src); doc.close();
+    }
+
+    function actualizarEstadoEntrega(nuevoEstado) {
+        if(!entregaSeleccionada) return;
+
+        const observaciones = document.getElementById('txtObservacionesDocente').value;
+
+        const payload = {
+            estado: nuevoEstado,
+            observaciones: observaciones,
+            updated_at: new Date().toISOString()
+        };
+
+        fetch(`${SUPABASE_URL}/rest/v1/entregas_tareas?id=eq.${entregaSeleccionada.id}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if(!res.ok) throw new Error("Error al guardar revisión");
+            alert(`Proyecto actualizado a: ${nuevoEstado}`);
+            entregaSeleccionada.estado = nuevoEstado;
+            entregaSeleccionada.observaciones = observaciones;
+            
+            seleccionarAlumno(alumnoSeleccionado);
+            cargarProyectoEnVisor(entregaSeleccionada);
         })
         .catch(err => {
-            alert("No se pudo actualizar el estado.");
+            alert("Ocurrió un error al guardar la calificación.");
             console.error(err);
         });
     }
 
-    function cambiarFichaCodigo(ficha) {
-        fichaCodigoActual = ficha;
-        const botones = document.getElementsByClassName('btn-pestana');
-        for(let btn of botones) btn.classList.remove('activa');
-        
-        if (!alumnoSeleccionadoActual) return;
-
-        if (ficha === 'html') { 
-            botones[0].classList.add('activa'); 
-            document.getElementById('txtCodigoDocente').value = alumnoSeleccionadoActual.codigo_html || ''; 
-        }
-        if (ficha === 'css') { 
-            botones[1].classList.add('activa'); 
-            document.getElementById('txtCodigoDocente').value = alumnoSeleccionadoActual.codigo_css || ''; 
-        }
-        if (ficha === 'js') { 
-            botones[2].classList.add('activa'); 
-            document.getElementById('txtCodigoDocente').value = alumnoSeleccionadoActual.codigo_js || ''; 
-        }
-    }
-
-    function ejecutarCodigoAlumno() {
-        if (!alumnoSeleccionadoActual) return;
-
-        const html = alumnoSeleccionadoActual.codigo_html || '';
-        const css = alumnoSeleccionadoActual.codigo_css || '';
-        const js = alumnoSeleccionadoActual.codigo_js || '';
-        const iframe = document.getElementById('iframeResultadoDocente');
-        const consola = document.getElementById('consolaErroresJS');
-        
-        if(consola) {
-            consola.innerHTML = "<span class='consola-ok'>✓ Consola activa: Sin errores detectados</span>";
-            consola.classList.remove('visible');
-        }
-
-        const scriptCapturador = 
-            '<' + 'script' + '>' +
-            'window.onerror = function(message, source, lineno, colno, error) {' +
-            '    window.parent.postMessage({' +
-            '        tipo: "error_js",' +
-            '        msg: message,' +
-            '        linea: lineno' +
-            '    }, "*");' +
-            '    return false;' +
-            '};' +
-            '<' + '/script' + '>';
-
-        const codigoCompleto = `
-            <!DOCTYPE html>
-            <html lang="es">
-            <head>
-                <meta charset="UTF-8">
-                <style>${css}</style>
-                ${scriptCapturador}
-            </head>
-            <body>
-                ${html}
-                <script>${js}<\/script>
-            </body>
-            </html>
-        `;
-        const documentoIframe = iframe.contentDocument || iframe.contentWindow.document;
-        documentoIframe.open(); 
-        documentoIframe.write(codigoCompleto); 
-        documentoIframe.close();
-    }
-
-    window.addEventListener('message', function(evento) {
-        if (evento.data && evento.data.tipo === 'error_js') {
-            const consola = document.getElementById('consolaErroresJS');
-            if (consola) {
-                consola.innerHTML = `⚠️ <b>Error en JS del Estudiante:</b> ${evento.data.msg} <br> 📍 <b>Línea aproximada:</b> ${evento.data.linea}`;
-                consola.classList.add('visible');
-            }
-        }
-    });
-
-    // Función auxiliar para forzar la descarga de cada archivo independiente
-    function forzarDescargaArchivo(contenido, nombreArchivo, tipoMime) {
-        const blob = new Blob([contenido], { type: tipoMime });
-        const enlace = document.createElement('a');
-        enlace.href = URL.createObjectURL(blob);
-        enlace.download = nombreArchivo;
-        document.body.appendChild(enlace);
-        enlace.click();
-        document.body.removeChild(enlace);
-        URL.revokeObjectURL(enlace.href);
-    }
-
-    // Descarga por separado el HTML, CSS y JavaScript estructurado
-    function descargarProyectoAlumno() {
-        if (!alumnoSeleccionadoActual) return;
-        
-        const html = alumnoSeleccionadoActual.codigo_html || '';
-        const css = alumnoSeleccionadoActual.codigo_css || '';
-        const js = alumnoSeleccionadoActual.codigo_js || '';
-        
-        const nombreLimpio = alumnoSeleccionadoActual.nombre ? alumnoSeleccionadoActual.nombre.replace(/[^a-zA-Z0-9]/g, "_") : "estudiante";
-        
-        // Estructura del HTML vinculando los archivos externos CSS y JS correspondientes
-        const contenidoHtmlEstructurado = `<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proyecto de ${alumnoSeleccionadoActual.nombre || 'Estudiante'}</title>
-    <link rel="stylesheet" href="style_${nombreLimpio}.css">
-</head>
-<body>
-    ${html}
-    <script src="script_${nombreLimpio}.js"><\/script>
-</body>
-</html>`;
-
-        // Descarga consecutiva de los tres lenguajes independientes
-        forzarDescargaArchivo(contenidoHtmlEstructurado, `index_${nombreLimpio}.html`, 'text/html');
-        forzarDescargaArchivo(css, `style_${nombreLimpio}.css`, 'text/css');
-        forzarDescargaArchivo(js, `script_${nombreLimpio}.js`, 'text/javascript');
+    function limpiarVistaTrabajo() {
+        entregaSeleccionada = null;
+        document.getElementById('listaProyectos').innerHTML = "";
+        document.getElementById('vistaVacia').style.display = 'flex';
+        document.getElementById('vistaTrabajo').style.display = 'none';
     }
 </script>
-
 </body>
 </html>

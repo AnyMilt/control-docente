@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal del Estudiante - U.E.M. Albertina Rivas Medina</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif; margin: 0; padding: 0;
+            background-color: #f4f7f6; height: 100vh; display: flex; flex-direction: column;
+        }
+        
+        /* --- VENTANAS FLOTANTES (LOGIN / REGISTRO) --- */
+        .pantalla-bloqueo {
+            position: fixed; top:0; left:0; width:100vw; height:100vh;
+            background-color: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 9999;
+        }
+        .caja-autenticacion {
+            background-color: #fff; padding: 35px; border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: center; max-width: 380px; width: 100%;
+        }
+        .caja-autenticacion input, .caja-autenticacion select {
+            width: 100%; padding: 11px; margin: 8px 0;
+            border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; text-align: center;
+        }
+        .btn-primario {
+            background-color: #27ae60; color: white; border: none; padding: 12px;
+            width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px;
+        }
+        .btn-primario:hover { background-color: #219653; }
+        .enlace-cambio { display: inline-block; margin-top: 15px; color: #3498db; text-decoration: none; font-size: 14px; cursor: pointer; }
+        .error-msg { color: #c0392b; font-size: 14px; margin-top: 10px; display: none; font-weight: bold; }
+
+        /* --- INTERFAZ DE TRABAJO --- */
+        header {
+            background-color: #2c3e50; color: white; padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        header h2 { margin: 0; font-size: 18px; }
+        .contenedor-principal { display: flex; flex-grow: 1; height: calc(100vh - 60px); overflow: hidden; }
+        
+        /* Historial */
+        .panel-historial { width: 260px; background-color: #fff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; }
+        .panel-historial h3 { padding: 15px 15px 5px 15px; margin: 0; font-size: 13px; color: #7f8c8d; text-transform: uppercase; }
+        .lista-trabajos { list-style: none; margin: 0; padding: 0; flex-grow: 1; overflow-y: auto; }
+        .trabajo-item { padding: 12px 15px; border-bottom: 1px solid #f1f1f1; cursor: pointer; transition: 0.2s; }
+        .trabajo-item:hover { background-color: #f5f6fa; }
+        .trabajo-item.seleccionado { background-color: #dff9fb; border-left: 4px solid #3498db; }
+        .trabajo-titulo { font-weight: bold; font-size: 13px; color: #333; display: block; }
+        .trabajo-estado { font-size: 11px; margin-top: 4px; display: inline-block; padding: 2px 6px; border-radius: 4px; font-weight: bold;}
+        
+        /* Editores */
+        .area-trabajo { flex-grow: 1; display: flex; flex-direction: column; background-color: #f8f9fa; }
+        .seccion-editores { display: flex; flex-direction: column; flex-grow: 1; height: 100%; }
+        .pestanas-editor { display: flex; background-color: #2c3e50; }
+        .pestana { flex: 1; padding: 8px 12px; color: #fff; text-align: center; cursor: pointer; font-size: 13px; font-weight: bold; border-right: 1px solid #34495e; user-select: none; }
+        .pestana:last-child { border-right: none; }
+        .pestana.activa { background-color: #1e1e1e; }
+        .pestana:hover { background-color: #34495e; }
+        .contenedor-pestanas { flex-grow: 1; position: relative; overflow: hidden; }
+        .panel-editor { position: absolute; inset: 0; display: none; }
+        .panel-editor.activo { display: flex; flex-direction: column; }
+        .txt-editor { flex-grow: 1; background-color: #1e1e1e; color: #d4d4d4; padding: 10px; font-family: monospace; font-size: 13px; border: none; outline: none; resize: none; box-sizing: border-box; }
+        
+        /* Feedback e Iframe */
+        .seccion-inferior { display: flex; height: 40%; }
+        .panel-feedback { width: 40%; background-color: #fff; border-right: 1px solid #e0e0e0; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; }
+        .panel-feedback h4 { margin: 0 0 8px 0; color: #c0392b; font-size: 14px; }
+        .box-recomendacion { flex-grow: 1; background-color: #fdf2f2; border: 1px solid #f5c6cb; border-radius: 4px; padding: 10px; font-size: 13px; color: #721c24; overflow-y: auto; }
+        
+        .panel-preview { width: 60%; background-color: #fff; display: flex; flex-direction: column; }
+        .preview-label { background-color: #eaeaea; padding: 5px 10px; font-size: 12px; color: #555; font-weight: bold; }
+        iframe { width: 100%; flex-grow: 1; border: none; background: white; }
+
+        /* Clases de Control */
+        .badge-pendiente { background-color: #ffeaa7; color: #d35400; }
+        .badge-revisado { background-color: #badc58; color: #27ae60; }
+        .bloqueado { background-color: #e2e2e2 !important; color: #7f8c8d !important; cursor: not-allowed; }
+        .btn-accion { background-color: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-accion:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<!-- VENTANA LOGIN -->
+<div id="modalLogin" class="pantalla-bloqueo">
+    <div class="caja-autenticacion">
+        <h2 style="margin-top:0;">Iniciar Sesión</h2>
+        <p style="color:#666; font-size:13px; margin-bottom:20px;">Plataforma de Informática - Albertina Rivas</p>
+        <input type="text" id="loginApellidos" placeholder="Tu Cédula de Identidad">
+        <input type="password" id="loginContrasena" placeholder="Tu Contraseña Personal">
+        <button class="btn-primario" style="background-color: #2980b9;" onclick="loginEstudiante()">Entrar al Sistema</button>
+        <div id="loginError" class="error-msg">❌ Credenciales incorrectas o campos vacíos.</div>
+        <a class="enlace-cambio" onclick="alternarVentanas('REGISTRO')">¿Eres nuevo estudiante? Regístrate aquí</a>
+    </div>
+</div>
+
+<!-- VENTANA REGISTRO -->
+<div id="modalRegistro" class="pantalla-bloqueo" style="display: none;">
+    <div class="caja-autenticacion">
+        <h2 style="margin-top:0; color:#27ae60;">Registro de Estudiante</h2>
+        <p style="color:#666; font-size:13px;">Llena tus datos con cuidado en MAYÚSCULAS</p>
+        <input type="text" id="regCedula" placeholder="Cédula de Identidad">
+        <input type="text" id="regApellidos" placeholder="Apellidos Completos">
+        <input type="text" id="regNombres" placeholder="Nombres Completos">
+        <select id="regCurso">
+            <option value="TERCERO INFORMATICA A">3ro Informática A</option>
+            <option value="TERCERO INFORMATICA B">3ro Informática B</option>
+        </select>
+        <input type="password" id="regContrasena" placeholder="Crea tu Contraseña Personal">
+        <!-- Campo adicional de protección docente para ingreso en clase -->
+        <input type="password" id="regCodigoClase" style="border: 1px solid #e74c3c; background-color: #fdf2f2;" placeholder="Código Dictado por el Docente">
+        
+        <button class="btn-primario" onclick="registrarEstudiante()">Finalizar Registro</button>
+        <div id="regError" class="error-msg"></div>
+        <a class="enlace-cambio" onclick="alternarVentanas('LOGIN')" style="color:#666;">Volver al Inicio de Sesión</a>
+    </div>
+</div>
+
+<!-- INTERFAZ DEL ENTORNO -->
+<header>
+    <div>
+        <span id="lblEstudiante" style="font-weight: bold; font-size: 15px;">Estudiante: Cargando...</span>
+        <span id="lblCurso" style="margin-left: 15px; font-size: 13px; color: #bdc3c7;"></span>
+    </div>
+    <div>
+        <button class="btn-accion" onclick="crearNuevoTrabajo()">➕ Nuevo Proyecto</button>
+        <button id="btnGuardar" class="btn-accion" style="background-color: #27ae60; margin-left:8px;" onclick="guardarProyectoSupabase()">💾 Guardar y Enviar</button>
+    </div>
+</header>
+
+<div class="contenedor-principal">
+    <div class="panel-historial">
+        <h3>Mis Entregas</h3>
+        <ul class="lista-trabajos" id="listaEntregas"></ul>
+    </div>
+        <div class="area-trabajo">
+            <div class="seccion-editores">
+                <div class="pestanas-editor">
+                    <div class="pestana activa" onclick="cambiarPestana('html', this)">HTML</div>
+                    <div class="pestana" onclick="cambiarPestana('css', this)">CSS</div>
+                    <div class="pestana" onclick="cambiarPestana('js', this)">JS</div>
+                </div>
+                <div class="contenedor-pestanas">
+                    <div id="panelHtml" class="panel-editor activo">
+                        <textarea id="txtHtml" class="txt-editor" oninput="renderLive()"></textarea>
+                    </div>
+                    <div id="panelCss" class="panel-editor">
+                        <textarea id="txtCss" class="txt-editor" oninput="renderLive()"></textarea>
+                    </div>
+                    <div id="panelJs" class="panel-editor">
+                        <textarea id="txtJs" class="txt-editor" oninput="renderLive()"></textarea>
+                    </div>
+                </div>
+            </div>
+        <div class="seccion-inferior">
+            <div class="panel-feedback">
+                <h4>Correcciones del Profesor:</h4>
+                <div id="txtObservaciones" class="box-recomendacion">Selecciona un trabajo para ver los comentarios.</div>
+            </div>
+            <div class="panel-preview">
+                <div class="preview-label">🖥️ Vista Ejecución:</div>
+                <iframe id="vpIframe"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://dudxwjaildagaqrfekra.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1ZHh3amFpbGRhZ2FxcmZla3JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTc1OTYsImV4cCI6MjA5ODkzMzU5Nn0.I3n5F8jWzuerzyz_lB79hAtjlLx3qY7pxySzgep_lz4";
+    
+    // =========================================================================
+    // MODIFICA ESTA CLAVE CUANDO QUIERAS CAMBIAR LA PALABRA DE PASO EN LA PIZARRA
+    // =========================================================================
+    const CODIGO_REGISTRO_DOCENTE = "Albertina2026"; 
+    // =========================================================================
+
+    let alumnoLogueado = null;
+    let listadoTrabajos = [];
+    let trabajoActualId = null;
+
+    function alternarVentanas(pantalla) {
+        document.getElementById('loginError').style.display = 'none';
+        document.getElementById('regError').style.display = 'none';
+        if(pantalla === 'REGISTRO') {
+            document.getElementById('modalLogin').style.display = 'none';
+            document.getElementById('modalRegistro').style.display = 'flex';
+        } else {
+            document.getElementById('modalLogin').style.display = 'flex';
+            document.getElementById('modalRegistro').style.display = 'none';
+        }
+    }
+
+    async function hashPassword(password, salt) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password + salt);
+        const hash = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // REGISTRO CONTROLADO POR FRASE CLAVE
+    function registrarEstudiante() {
+        const cedula = document.getElementById('regCedula').value.trim();
+        const apellidos = document.getElementById('regApellidos').value.toUpperCase().trim();
+        const nombres = document.getElementById('regNombres').value.toUpperCase().trim();
+        const paralelo = document.getElementById('regCurso').value;
+        const contrasena = document.getElementById('regContrasena').value.trim();
+        const codigoIngresado = document.getElementById('regCodigoClase').value.trim();
+        const divError = document.getElementById('regError');
+
+        if(!cedula || !apellidos || !nombres || !contrasena || !codigoIngresado) {
+            divError.innerText = "❌ Todos los campos son obligatorios.";
+            divError.style.display = 'block';
+            return;
+        }
+
+        if (codigoIngresado !== CODIGO_REGISTRO_DOCENTE) {
+            divError.innerText = "🔒 Código de registro incorrecto. Solicítalo a tu profesor en la pizarra.";
+            divError.style.display = 'block';
+            return;
+        }
+
+        hashPassword(contrasena, cedula).then(hashedPassword => {
+            return fetch(`${SUPABASE_URL}/rest/v1/alumnos`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json', 'Prefer': 'return=representation'
+                },
+                body: JSON.stringify({ cedula, apellidos, nombres, paralelo, contrasena_hash: hashedPassword })
+            });
+        })
+        .then(res => {
+            if (!res.ok) return res.text().then(txt => { throw new Error(txt || `HTTP ${res.status}`); });
+            return res.json();
+        })
+        .then(nuevoAlumno => {
+            alert("🎉 ¡Registro completado con éxito! Ya puedes iniciar sesión.");
+            alternarVentanas('LOGIN');
+        })
+        .catch(err => {
+            divError.innerText = `❌ Error al guardar datos: ${err.message}`;
+            divError.style.display = 'block';
+            console.error(err);
+        });
+    }
+
+    // LOGIN DE ALUMNOS POR CEDULA
+    function loginEstudiante() {
+        const cedula = document.getElementById('loginApellidos').value.trim();
+        const contrasena = document.getElementById('loginContrasena').value.trim();
+        const divError = document.getElementById('loginError');
+
+        if(!cedula || !contrasena) {
+            divError.style.display = 'block';
+            return;
+        }
+
+        hashPassword(contrasena, cedula).then(hashedPassword => {
+            return fetch(`${SUPABASE_URL}/rest/v1/alumnos?cedula=eq.${encodeURIComponent(cedula)}&contrasena_hash=eq.${encodeURIComponent(hashedPassword)}&limit=1`, {
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+            });
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            if(data.length > 0) {
+                alumnoLogueado = data[0];
+                document.getElementById('lblEstudiante').innerText = `Estudiante: ${alumnoLogueado.apellidos}, ${alumnoLogueado.nombres}`;
+                document.getElementById('lblCurso').innerText = `(${alumnoLogueado.paralelo})`;
+                document.getElementById('modalLogin').style.display = 'none';
+                cargarEntregas();
+            } else {
+                divError.innerText = "❌ Credenciales incorrectas.";
+                divError.style.display = 'block';
+            }
+        })
+        .catch(err => {
+            divError.innerText = `❌ Error al conectar con el servidor: ${err.message}`;
+            divError.style.display = 'block';
+            console.error(err);
+        });
+    }
+
+    function cargarEntregas() {
+        fetch(`${SUPABASE_URL}/rest/v1/entregas_tareas?alumno_id=eq.${alumnoLogueado.id}&order=id.desc`, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            listadoTrabajos = data || [];
+            renderLista();
+            if(listadoTrabajos.length > 0) cargarTrabajoEspecifico(listadoTrabajos[0]);
+            else crearNuevoTrabajo();
+        })
+        .catch(err => {
+            alert(`❌ No se pudieron cargar tus entregas: ${err.message}`);
+            console.error(err);
+        });
+    }
+
+    function renderLista() {
+        const ul = document.getElementById('listaEntregas');
+        ul.innerHTML = "";
+        listadoTrabajos.forEach((trb, i) => {
+            const li = document.createElement('li');
+            li.className = `trabajo-item ${trabajoActualId === trb.id ? 'seleccionado' : ''}`;
+            const badge = trb.estado === "REVISADO" ? "badge-revisado" : "badge-pendiente";
+            li.innerHTML = `<span class="trabajo-titulo">Proyecto #${listadoTrabajos.length - i}</span>
+                            <span class="trabajo-estado ${badge}">${trb.estado || 'POR REVISAR'}</span>`;
+            li.onclick = () => cargarTrabajoEspecifico(trb);
+            ul.appendChild(li);
+        });
+    }
+
+    function cargarTrabajoEspecifico(trb) {
+        trabajoActualId = trb.id;
+        renderLista();
+        document.getElementById('txtHtml').value = trb.codigo_html || '';
+        document.getElementById('txtCss').value = trb.codigo_css || '';
+        document.getElementById('txtJs').value = trb.codigo_js || '';
+        document.getElementById('txtObservaciones').innerText = trb.observaciones || "Sin comentarios del docente todavía.";
+
+        const bloquear = trb.estado === "REVISADO";
+        const txts = [document.getElementById('txtHtml'), document.getElementById('txtCss'), document.getElementById('txtJs')];
+        txts.forEach(t => { t.readOnly = bloquear; if(bloquear) t.classList.add('bloqueado'); else t.classList.remove('bloqueado'); });
+        
+        const btn = document.getElementById('btnGuardar');
+        btn.disabled = bloquear;
+        btn.innerText = bloquear ? "🔒 Proyecto Bloqueado" : "💾 Guardar y Enviar";
+        renderLive();
+    }
+
+    function crearNuevoTrabajo() {
+        const html = document.getElementById('txtHtml').value.trim();
+        const css = document.getElementById('txtCss').value.trim();
+        const js = document.getElementById('txtJs').value.trim();
+        if (html || css || js) {
+            if (!confirm("¿Deseas descartar el proyecto actual y crear uno nuevo?")) return;
+        }
+        trabajoActualId = null;
+        document.getElementById('txtHtml').value = "<!-- Estructura tu HTML -->";
+        document.getElementById('txtCss').value = "/* Estilos CSS */";
+        document.getElementById('txtJs').value = "// Código JS";
+        document.getElementById('txtObservaciones').innerText = "Guarda este nuevo trabajo para enviarlo a revisión.";
+        
+        const txts = [document.getElementById('txtHtml'), document.getElementById('txtCss'), document.getElementById('txtJs')];
+        txts.forEach(t => { t.readOnly = false; t.classList.remove('bloqueado'); });
+        
+        const btn = document.getElementById('btnGuardar');
+        btn.disabled = false; btn.innerText = "💾 Guardar Nuevo Proyecto";
+        renderLive();
+    }
+
+    function guardarProyectoSupabase() {
+        const payload = {
+            alumno_id: alumnoLogueado.id,
+            codigo_html: document.getElementById('txtHtml').value,
+            codigo_css: document.getElementById('txtCss').value,
+            codigo_js: document.getElementById('txtJs').value,
+            estado: "POR REVISAR",
+            updated_at: new Date().toISOString()
+        };
+
+        console.log("Guardando payload:", payload);
+
+        const esEdicion = trabajoActualId !== null;
+        const url = esEdicion ? `${SUPABASE_URL}/rest/v1/entregas_tareas?id=eq.${trabajoActualId}` : `${SUPABASE_URL}/rest/v1/entregas_tareas`;
+
+        fetch(url, {
+            method: esEdicion ? 'PATCH' : 'POST',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json', 'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if (!res.ok) return res.text().then(txt => { throw new Error(txt || `HTTP ${res.status}`); });
+            return res.json();
+        })
+        .then(() => {
+            alert("🚀 ¡Entrega guardada con éxito!");
+            cargarEntregas();
+        })
+        .catch(err => {
+            alert(`❌ No se pudo guardar la entrega: ${err.message}`);
+            console.error(err);
+        });
+    }
+
+    function renderLive() {
+        const html = document.getElementById('txtHtml').value;
+        const css = document.getElementById('txtCss').value;
+        const js = document.getElementById('txtJs').value;
+        const iframe = document.getElementById('vpIframe');
+        iframe.srcdoc = `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+    }
+
+    function cambiarPestana(tipo, el) {
+        document.querySelectorAll('.pestana').forEach(p => p.classList.remove('activa'));
+        document.querySelectorAll('.panel-editor').forEach(p => p.classList.remove('activo'));
+        el.classList.add('activa');
+        document.getElementById('panel' + tipo.charAt(0).toUpperCase() + tipo.slice(1)).classList.add('activo');
+    }
+</script>
+</body>
+</html>
