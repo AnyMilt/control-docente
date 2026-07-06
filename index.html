@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Profesor (U.E.M. Albertina Rivas Medina)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            height: 100vh;
+            display: flex;
+        }
+        
+        /* --- ESTILOS DEL LOGIN --- */
+        #pantallaLogin {
+            position: fixed;
+            top:0; left:0; width:100vw; height:100vh;
+            background-color: #1e1e24;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .caja-login {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 350px;
+            width: 100%;
+        }
+        .caja-login h2 { margin-top: 0; color: #333; }
+        .caja-login input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .caja-login button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .caja-login button:hover { background-color: #0056b3; }
+        .error-login { color: red; font-size: 14px; margin-top: 10px; display: none; }
+
+        /* --- ESTILOS DEL PANEL PRINCIPAL --- */
+        .sidebar {
+            width: 300px;
+            background-color: #fff;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .sidebar-header {
+            padding: 20px;
+            background-color: #007bff;
+            color: white;
+        }
+        .sidebar-header h3 { margin: 0; font-size: 18px; }
+        .lista-alumnos {
+            flex-grow: 1;
+            overflow-y: auto;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .alumno-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .alumno-item:hover { background-color: #e9ecef; }
+        .alumno-item.seleccionado { background-color: #cfe2ff; border-left: 4px solid #007bff; }
+        .alumno-nombre { font-weight: bold; display: block; color: #333; }
+        .alumno-curso { font-size: 12px; color: #666; margin-top: 3px; }
+
+        .visor-codigo {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .visor-header {
+            padding: 15px 20px;
+            background-color: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+        }
+        .visor-header h2 { margin: 0; font-size: 20px; color: #333; }
+        
+        .area-trabajo {
+            display: flex;
+            flex-grow: 1;
+            height: calc(100vh - 60px);
+        }
+        .codigos-fuente {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e0e0e0;
+        }
+        .pestañas-codigo {
+            display: flex;
+            background-color: #eaeaea;
+        }
+        .btn-pestana {
+            padding: 10px 15px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: bold;
+            color: #666;
+        }
+        .btn-pestana.activa { background-color: #1e1e1e; color: #fff; }
+        
+        .contenedor-texto {
+            flex-grow: 1;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            resize: none;
+            border: none;
+            outline: none;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        
+        .vista-previa {
+            width: 50%;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+        }
+        .bar-preview {
+            background-color: #f1f1f1;
+            padding: 5px 10px;
+            font-size: 12px;
+            color: #555;
+            border-bottom: 1px solid #ddd;
+        }
+        iframe {
+            width: 100%;
+            flex-grow: 1;
+            border: none;
+            background-color: white;
+        }
+        
+        .sin-seleccion {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            color: #888;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- PANTALLA DE LOGIN -->
+<div id="pantallaLogin">
+    <div class="caja-login">
+        <h2>Panel Docente</h2>
+        <p style="color:#666; font-size:13px;">Introduce la clave de acceso de la Albertina Rivas</p>
+        <input type="password" id="claveProfesor" placeholder="Contraseña del Profesor" onkeydown="if(event.key==='Enter') verificarLogin()">
+        <button onclick="verificarLogin()">Ingresar al Panel</button>
+        <div id="errorMsg" class="error-login">❌ Contraseña incorrecta</div>
+    </div>
+</div>
+
+<!-- SIDEBAR: LISTADO DE ENTREGAS -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h3>Entregas de Tareas</h3>
+        <small>Tercero de Informática</small>
+    </div>
+    <ul class="lista-alumnos" id="contenedorLista">
+        <!-- Los alumnos cargados se insertarán aquí -->
+    </ul>
+</div>
+
+<!-- VISOR CENTRAL DE CÓDIGO Y RESULTADO -->
+<div class="visor-codigo" id="visorCentral">
+    <div class="sin-seleccion" id="msgVacio">
+        Selecciona un estudiante de la lista de la izquierda para revisar su proyecto
+    </div>
+    
+    <div id="cuerpoVisor" style="display: none; height: 100%; flex-direction: column; flex-grow: 1;">
+        <div class="visor-header">
+            <h2 id="nombreAlumnoTitulo">Estudiante</h2>
+        </div>
+        
+        <div class="area-trabajo">
+            <!-- Bloque izquierdo: Editores de Código -->
+            <div class="codigos-fuente">
+                <div class="pestañas-codigo">
+                    <button class="btn-pestana activa" onclick="cambiarFichaCodigo('html')">HTML</button>
+                    <button class="btn-pestana" onclick="cambiarFichaCodigo('css')">CSS</button>
+                    <button class="btn-pestana" onclick="cambiarFichaCodigo('js')">JS</button>
+                </div>
+                <div style="flex-grow: 1; height: 100%;">
+                    <textarea id="txtCodigoDocente" class="contenedor-texto" readonly></textarea>
+                </div>
+            </div>
+            
+            <!-- Bloque derecho: Renderizado en vivo -->
+            <div class="vista-previa">
+                <div class="bar-preview">🖥️ Vista de ejecución del estudiante:</div>
+                <iframe id="iframeResultadoDocente"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // =========================================================================
+    // CONFIGURACIÓN DE TU CREDENCIAL Y CONEXIÓN (COLOCA TUS MISMOS DATOS DE SUPABASE)
+    // =========================================================================
+    const SUPABASE_URL = "https://dudxwjaildagaqrfekra.supabase.co"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1ZHh3amFpbGRhZ2FxcmZla3JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTc1OTYsImV4cCI6MjA5ODkzMzU5Nn0.I3n5F8jWzuerzyz_lB79hAtjlLx3qY7pxySzgep_lz4";
+    
+    // Contraseña de acceso directa: Puedes cambiar "Albertina2026" por la que quieras
+    const CONTRASENA_ACCESO = "Albertina2026"; 
+    // =========================================================================
+
+    let datosAlumnosGuardados = [];
+    let alumnoSeleccionadoActual = null;
+    let fichaCodigoActual = 'html';
+
+    function verificarLogin() {
+        const pass = document.getElementById('claveProfesor').value;
+        if (pass === CONTRASENA_ACCESO) {
+            document.getElementById('pantallaLogin').style.display = 'none';
+            cargarEntregasDesdeSupabase();
+        } else {
+            document.getElementById('errorMsg').style.display = 'block';
+        }
+    }
+
+    function cargarEntregasDesdeSupabase() {
+        // Hacemos un GET a la tabla ordenando por el ID más reciente
+        fetch(`${SUPABASE_URL}/rest/v1/entregas_tareas?order=id.desc`, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            datosAlumnosGuardados = data;
+            renderizarListaAlumnos();
+        })
+        .catch(err => {
+            alert("Error al cargar los datos de Supabase. Revisa las credenciales.");
+            console.error(err);
+        });
+    }
+
+    function renderizarListaAlumnos() {
+        const contenedor = document.getElementById('contenedorLista');
+        contenedor.innerHTML = "";
+
+        if(datosAlumnosGuardados.length === 0) {
+            contenedor.innerHTML = "<li style='padding:20px; color:#888; text-align:center;'>No hay entregas registradas aún.</li>";
+            return;
+        }
+
+        datosAlumnosGuardados.forEach((alumno, index) => {
+            const li = document.createElement('li');
+            li.className = 'alumno-item';
+            li.innerHTML = `
+                <span class="alumno-nombre">${alumno.nombre}</span>
+                <span class="alumno-curso">${alumno.paralelo}</span>
+            `;
+            li.addEventListener('click', () => verDetalleAlumno(index, li));
+            contenedor.appendChild(li);
+        });
+    }
+
+    function verDetalleAlumno(index, elementoLista) {
+        // Cambiar estados de clases activas en la lista
+        const items = document.getElementsByClassName('alumno-item');
+        for(let item of items) item.classList.remove('seleccionado');
+        elementoLista.classList.add('seleccionado');
+
+        alumnoSeleccionadoActual = datosAlumnosGuardados[index];
+        
+        // Quitar mensaje de vacío y mostrar estructura
+        document.getElementById('msgVacio').style.display = 'none';
+        document.getElementById('cuerpoFormularioEntrega');
+        document.getElementById('cuerpoVisor').style.display = 'flex';
+        
+        document.getElementById('nombreAlumnoTitulo').innerText = `${alumnoSeleccionadoActual.nombre} - ${alumnoSeleccionadoActual.paralelo}`;
+        
+        // Cargar por defecto la pestaña HTML
+        cambiarFichaCodigo('html');
+        ejecutarCodigoAlumno();
+    }
+
+    function cambiarFichaCodigo(ficha) {
+        fichaCodigoActual = ficha;
+        
+        const botones = document.getElementsByClassName('btn-pestana');
+        for(let btn of botones) btn.classList.remove('activa');
+        
+        // Activar el botón correspondiente
+        if (ficha === 'html') botones[0].classList.add('activa');
+        if (ficha === 'css') botones[1].classList.add('activa');
+        if (ficha === 'js') botones[2].classList.add('activa');
+
+        if (!alumnoSeleccionadoActual) return;
+
+        // Cargar el texto plano guardado en la base de datos sin alterar saltos de línea
+        if (ficha === 'html') document.getElementById('txtCodigoDocente').value = alumnoSeleccionadoActual.codigo_html || '';
+        if (ficha === 'css') document.getElementById('txtCodigoDocente').value = alumnoSeleccionadoActual.codigo_css || '';
+        if (ficha === 'js') document.getElementById('txtCodigoDocente').value = alumnoSeleccionadoActual.codigo_js || '';
+    }
+
+    function ejecutarCodigoAlumno() {
+        if (!alumnoSeleccionadoActual) return;
+
+        const html = alumnoSeleccionadoActual.codigo_html || '';
+        const css = alumnoSeleccionadoActual.codigo_css || '';
+        const js = alumnoSeleccionadoActual.codigo_js || '';
+        const iframe = document.getElementById('iframeResultadoDocente');
+
+        const codigoCompleto = `
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <style>${css}</style>
+            </head>
+            <body>
+                ${html}
+                <script>${js}<\/script>
+            </body>
+            </html>
+        `;
+
+        const documentoIframe = iframe.contentDocument || iframe.contentWindow.document;
+        documentoIframe.open();
+        documentoIframe.write(codigoCompleto);
+        documentoIframe.close();
+    }
+</script>
+
+</body>
+</html>
