@@ -209,10 +209,10 @@
 
 <script>
     // =========================================================================
-    // REEMPLAZA CON LAS CREDENCIALES DE TU BASE DE DATOS DE SUPABASE
+    // CREDENCIALES DIRECTAS DE TU PROYECTO EN SUPABASE
     // =========================================================================
     const SUPABASE_URL = "https://dudxwjaildagaqrfekra.supabase.co"; 
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1ZHh3amFpbGRhZ2FxcmZla3JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTc1OTYsImV4cCI6MjA5ODkzMzU5Nn0.I3n5F8jWzuerzyz_lB79hAtjlLx3qY7pxySzgep_lz4"; // <-- REEMPLAZA ESTO CON TU CLAVE LARGA ANON
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1ZHh3amFpbGRhZ2FxcmZla3JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTc1OTYsImV4cCI6MjA5ODkzMzU5Nn0.I3n5F8jWzuerzyz_lB79hAtjlLx3qY7pxySzgep_lz4"; // <-- PEGA TU LLAVE ANON AQUÍ
     const CONTRASENA_ACCESO = "Albertina2026"; 
     // =========================================================================
 
@@ -457,7 +457,6 @@
         const blob = new Blob([contenidoArchivo], { type: 'text/html' });
         const enlaceDescarga = document.createElement('a');
         
-        // Formatear el nombre del archivo de descarga de manera legible
         const nombreLimpio = alumnoSeleccionadoActual.nombre.replace(/[^a-zA-Z0-9]/g, "_");
         enlaceDescarga.download = `Proyecto_${nombreLimpio}.html`;
         enlaceDescarga.href = URL.createObjectURL(blob);
