@@ -177,15 +177,12 @@
         <div class="visor-header">
             <h2 id="nombreAlumnoTitulo">Estudiante</h2>
             <div class="controles-header">
-                <!-- ACCIÓN DESCARGAR ARCHIVO LOCAL -->
                 <button class="btn-descargar" onclick="descargarProyectoAlumno()">📥 Descargar HTML</button>
-                <!-- CONTROL DE ACTUALIZACIÓN DE REVISIÓN -->
                 <button id="btnEstadoAccion" class="btn-cambiar-estado" onclick="alternarEstadoActual()"></button>
             </div>
         </div>
         
         <div class="area-trabajo">
-            <!-- Editores del Alumno -->
             <div class="codigos-fuente">
                 <div class="pestañas-codigo">
                     <button class="btn-pestana activa" onclick="cambiarFichaCodigo('html')">HTML</button>
@@ -196,11 +193,9 @@
                     <textarea id="txtCodigoDocente" class="contenedor-texto" readonly></textarea>
                 </div>
             </div>
-            <!-- Renderizador de Códigos y Consola -->
             <div class="vista-previa">
                 <div class="bar-preview">🖥️ Vista de ejecución en vivo:</div>
                 <iframe id="iframeResultadoDocente"></iframe>
-                <!-- CONSOLA DE CAPTURA DE ERRORES -->
                 <div id="consolaErroresJS" class="consola-errores"></div>
             </div>
         </div>
@@ -221,7 +216,16 @@
     let fichaCodigoActual = 'html';
 
     function verificarLogin() {
-        if (document.getElementById('claveProfesor').value === CONTRASENA_ACCESO) {
+        const passwordIngresada = document.getElementById('claveProfesor').value.trim();
+        
+        if (passwordIngresada === CONTRASENA_ACCESO) {
+            document.getElementById('errorMsg').style.display = 'none';
+            
+            if (SUPABASE_ANON_KEY.includes("PEGA_AQUÍ")) {
+                alert("⚠️ Contraseña correcta, pero te falta pegar tu clave larga de Supabase en la línea 205 del código.");
+                return;
+            }
+            
             document.getElementById('pantallaLogin').style.display = 'none';
             cargarEntregasDesdeSupabase();
         } else {
@@ -234,7 +238,10 @@
             method: 'GET',
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         })
-        .then(res => res.json())
+        .then(res => {
+            if(!res.ok) { throw new Error("Error de respuesta de red"); }
+            return res.json();
+        })
         .then(data => {
             if (Array.isArray(data)) {
                 datosAlumnosTodos = data;
@@ -244,7 +251,7 @@
             }
         })
         .catch(err => {
-            alert("Error al conectar con Supabase. Verifica la clave API colocada en la línea 205.");
+            alert("❌ Error de conexión con Supabase. Verifica que tu clave anónima (línea 205) sea la correcta y no tenga espacios de más.");
             console.error(err);
         });
     }
@@ -393,18 +400,17 @@
             consola.classList.remove('visible');
         }
 
-        const scriptCapturador = `
-            <script>
-                window.onerror = function(message, source, lineno, colno, error) {
-                    window.parent.postMessage({
-                        tipo: 'error_js',
-                        msg: message,
-                        linea: lineno
-                    }, '*');
-                    return false;
-                };
-            <\/script>
-        `;
+        const scriptCapturador = 
+            '<' + 'script' + '>' +
+            'window.onerror = function(message, source, lineno, colno, error) {' +
+            '    window.parent.postMessage({' +
+            '        tipo: "error_js",' +
+            '        msg: message,' +
+            '        linea: lineno' +
+            '    }, "*");' +
+            '    return false;' +
+            '};' +
+            '<' + '/script' + '>';
 
         const codigoCompleto = `
             <!DOCTYPE html>
@@ -443,6 +449,7 @@
         const css = alumnoSeleccionadoActual.codigo_css || '';
         const js = alumnoSeleccionadoActual.codigo_js || '';
         
+        // Corrección del error dividiendo las etiquetas script de la descarga
         const contenidoArchivo = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -455,9 +462,9 @@
 </head>
 <body>
     ${html}
-    <script>
+    ` + '<' + 'script' + `>
         ${js}
-    </script>
+    ` + '<' + '/script' + `>
 </body>
 </html>`;
 
