@@ -67,6 +67,34 @@
         .bloqueado { background-color: #e2e2e2 !important; color: #7f8c8d !important; cursor: not-allowed; }
         .btn-accion { background-color: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .btn-accion:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header { padding: 10px; gap: 10px; }
+            header h2 { font-size: 16px; }
+            .toolbar { width: 100%; gap: 8px; }
+            .toolbar select { flex: 1; min-width: 0; font-size: 12px; padding: 6px 8px; }
+            .btn-accion { padding: 8px 10px; font-size: 13px; }
+            .contenedor-principal { height: calc(100vh - 140px); }
+            .pestana { padding: 10px 8px; font-size: 12px; }
+            .txt-editor { font-size: 12px; padding: 8px; }
+            .panel-feedback { padding: 10px; }
+            .panel-feedback h4 { font-size: 13px; }
+            .box-recomendacion { font-size: 12px; padding: 8px; }
+        }
+
+        @media (max-width: 480px) {
+            header { padding: 8px; gap: 8px; }
+            header h2 { font-size: 14px; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .toolbar select { width: 100%; }
+            .btn-accion { width: 100%; margin-left: 0 !important; }
+            .contenedor-principal { height: calc(100vh - 180px); }
+            .pestana { padding: 8px 4px; font-size: 11px; }
+            .txt-editor { font-size: 11px; padding: 6px; }
+            .panel-feedback { padding: 8px; }
+            .box-recomendacion { font-size: 11px; padding: 6px; }
+        }
     </style>
 </head>
 <body>
@@ -286,6 +314,7 @@
                 document.getElementById('lblCurso').innerText = `(${alumnoLogueado.paralelo})`;
                 document.getElementById('modalLogin').style.display = 'none';
                 cargarEntregas();
+                iniciarSincronizacion();
             } else {
                 divError.innerText = "❌ Credenciales incorrectas.";
                 divError.style.display = 'block';
@@ -321,13 +350,64 @@
         .then(data => {
             listadoTrabajos = data || [];
             actualizarSelectorProyectos();
-            if(listadoTrabajos.length > 0) cargarTrabajoEspecifico(listadoTrabajos[0]);
-            else crearNuevoTrabajo();
+            if(listadoTrabajos.length > 0) {
+                const existe = listadoTrabajos.find(t => t.id === trabajoActualId);
+                if (existe) cargarTrabajoEspecifico(existe);
+                else cargarTrabajoEspecifico(listadoTrabajos[0]);
+            } else crearNuevoTrabajo();
         })
         .catch(err => {
             alert(`❌ No se pudieron cargar tus entregas: ${err.message}`);
             console.error(err);
         });
+    }
+
+    function sincronizarEntregas() {
+        if (!alumnoLogueado) return;
+        fetch(`${SUPABASE_URL}/rest/v1/entregas_tareas?alumno_id=eq.${alumnoLogueado.id}&order=id.desc`, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            const nuevas = data || [];
+            const actualizadas = [];
+            
+            nuevas.forEach(nueva => {
+                const anterior = listadoTrabajos.find(t => t.id === nueva.id);
+                if (!anterior || anterior.updated_at !== nueva.updated_at) {
+                    actualizadas.push(nueva);
+                }
+            });
+            
+            if (actualizadas.length > 0) {
+                listadoTrabajos = nuevas;
+                actualizarSelectorProyectos();
+                
+                actualizadas.forEach(actualizada => {
+                    if (actualizada.id === trabajoActualId) {
+                        cargarTrabajoEspecifico(actualizada);
+                        mostrarIndicadorActualizacion();
+                    }
+                });
+            }
+        })
+        .catch(err => console.error("Error en sincronización:", err));
+    }
+
+    function mostrarIndicadorActualizacion() {
+        const header = document.querySelector('header');
+        header.style.transition = 'background-color 0.3s';
+        header.style.backgroundColor = '#27ae60';
+        setTimeout(() => {
+            header.style.backgroundColor = '#2c3e50';
+        }, 1500);
+    }
+
+    function iniciarSincronizacion() {
+        setInterval(sincronizarEntregas, 5000);
     }
 
     function cargarTrabajoEspecifico(trb) {
