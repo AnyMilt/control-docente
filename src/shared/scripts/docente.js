@@ -154,12 +154,15 @@ function renderAlumnos() {
         
         const div = document.createElement('div');
         div.className = `item-alumno ${alumnoSeleccionado && alumnoSeleccionado.id === al.id ? 'seleccionado' : ''} ${esNuevo ? 'item-nuevo' : ''}`;
-        div.innerHTML = `<div class="alumno-nombre">${al.apellidos}, ${al.nombres} ${badgePendientes}</div>
+        div.innerHTML = `<div class="alumno-nombre">${al.apellidos}, ${al.nombres}</div>
                          <div class="alumno-detalles">🔑 Contraseña: <b>${al.contrasena || 'S/N'}</b></div>
-                         <div style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap;">
-                            <button class="btn-docente btn-revisar" style="font-size:10px; padding:4px 8px;" onclick="editarAlumno(${al.id})">✏️ Editar</button>
-                            <button class="btn-docente btn-desbloquear" style="font-size:10px; padding:4px 8px; background-color:#c0392b;" onclick="eliminarAlumno(${al.id})">🗑️ Eliminar</button>
-                            <button class="btn-docente" style="font-size:10px; padding:4px 8px; background-color:#8e44ad;" onclick="resetarClaveAlumno(${al.id})">🔑 Reset</button>
+                         <div class="alumno-pendientes-row">
+                            ${badgePendientes}
+                            <div style="display:flex; gap:5px; flex-wrap:wrap; margin-top:6px;">
+                                <button class="btn-docente btn-revisar" style="font-size:10px; padding:4px 8px;" onclick="editarAlumno(${al.id})">✏️ Editar</button>
+                                <button class="btn-docente btn-desbloquear" style="font-size:10px; padding:4px 8px; background-color:#c0392b;" onclick="eliminarAlumno(${al.id})">🗑️ Eliminar</button>
+                                <button class="btn-docente" style="font-size:10px; padding:4px 8px; background-color:#8e44ad;" onclick="resetarClaveAlumno(${al.id})">🔑 Reset</button>
+                            </div>
                          </div>`;
         div.onclick = (e) => {
             if (e.target.tagName !== 'BUTTON') seleccionarAlumno(al);
