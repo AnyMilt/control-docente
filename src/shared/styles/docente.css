@@ -89,11 +89,16 @@ iframe { width: 100%; flex-grow: 1; border: none; background: white; }
 .entrega-nueva { animation: resaltarEntrega 2s ease-out; }
 @keyframes resaltarEntrega {
     0% { background-color: #27ae60; color: white; }
-     100% { background-color: transparent; }
+    100% { background-color: transparent; }
 }
 
-.badge-pendiente { background-color: #ffeaa7; color: #d35400; }
-.badge-revisado { background-color: #badc58; color: #27ae60; }
+.badge-pendiente { background-color: #e67e22; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.25); animation: pulsePendiente 2s infinite; }
+.badge-revisado { background-color: #badc58; color: #27ae60; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+@keyframes pulsePendiente {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(230, 126, 34, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(230, 126, 34, 0); }
+}
 
 @media (max-width: 900px) {
     .contenedor-principal { flex-direction: column; }
