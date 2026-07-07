@@ -302,9 +302,10 @@
             div.className = `item-alumno ${alumnoSeleccionado && alumnoSeleccionado.id === al.id ? 'seleccionado' : ''}`;
             div.innerHTML = `<div class="alumno-nombre">${al.apellidos}, ${al.nombres}</div>
                              <div class="alumno-detalles">🔑 Contraseña: <b>${al.contrasena || 'S/N'}</b></div>
-                             <div style="margin-top:5px; display:flex; gap:5px;">
+                             <div style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap;">
                                 <button class="btn-docente btn-revisar" style="font-size:10px; padding:4px 8px;" onclick="editarAlumno(${al.id})">✏️ Editar</button>
                                 <button class="btn-docente btn-desbloquear" style="font-size:10px; padding:4px 8px; background-color:#c0392b;" onclick="eliminarAlumno(${al.id})">🗑️ Eliminar</button>
+                                <button class="btn-docente" style="font-size:10px; padding:4px 8px; background-color:#8e44ad;" onclick="resetarClaveAlumno(${al.id})">🔑 Reset</button>
                              </div>`;
             div.onclick = (e) => {
                 if (e.target.tagName !== 'BUTTON') seleccionarAlumno(al);
@@ -534,6 +535,42 @@
 
     function cancelarEdicionAlumno() {
         cargarFormularioAlumno(null);
+    }
+
+    async function hashPassword(password, salt) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password + salt);
+        const hash = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function resetarClaveAlumno(id) {
+        const alumno = alumnos.find(a => a.id === id);
+        if (!alumno) return;
+        
+        mostrarModalConfirmacion(`¿Resetear la contraseña de ${alumno.apellidos}, ${alumno.nombres}? Se establecerá en "123456".`, async () => {
+            try {
+                const hashedPassword = await hashPassword("123456", alumno.cedula);
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/alumnos?id=eq.${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify({ contrasena_hash: hashedPassword })
+                });
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error(txt || `HTTP ${res.status}`);
+                }
+                mostrarToast(`Contraseña reseteada a 123456 para ${alumno.apellidos}, ${alumno.nombres}`, 'success');
+            } catch (err) {
+                mostrarModalError(`Error al resetear contraseña: ${err.message}`);
+                console.error(err);
+            }
+        });
     }
 
     function analizarYGenerarRetroalimentacion() {
