@@ -124,6 +124,26 @@
             .pestañas-codigo { flex-wrap: wrap; }
             .tab-btn { padding: 6px 10px; font-size: 11px; }
         }
+
+        /* Modales personalizados */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 99999; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+        .modal-card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); max-width: 400px; width: 90%; text-align: center; transform: translateY(20px); transition: transform 0.2s; }
+        .modal-overlay.visible .modal-card { transform: translateY(0); }
+        .modal-card h3 { margin: 0 0 10px 0; font-size: 18px; }
+        .modal-card p { color: #555; font-size: 14px; margin: 10px 0 20px 0; }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        .modal-actions button { padding: 10px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .modal-btn-primary { background-color: #2980b9; color: white; }
+        .modal-btn-danger { background-color: #c0392b; color: white; }
+        .modal-btn-success { background-color: #27ae60; color: white; }
+        .modal-btn-secondary { background-color: #bdc3c7; color: #2c3e50; }
+
+        .toast { position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 6px; color: white; font-weight: bold; z-index: 999999; transform: translateX(400px); transition: transform 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .toast.visible { transform: translateX(0); }
+        .toast-success { background-color: #27ae60; }
+        .toast-error { background-color: #c0392b; }
+        .toast-info { background-color: #2980b9; }
     </style>
 </head>
 <body>
@@ -382,7 +402,7 @@
         })
         .then(res => {
             if(!res.ok) throw new Error("Error al guardar revisión");
-            alert(`Proyecto actualizado a: ${nuevoEstado}`);
+            mostrarToast(`Proyecto actualizado a: ${nuevoEstado}`, 'success');
             entregaSeleccionada.estado = nuevoEstado;
             entregaSeleccionada.observaciones = observaciones;
             
@@ -390,7 +410,7 @@
             cargarProyectoEnVisor(entregaSeleccionada);
         })
         .catch(err => {
-            alert("Ocurrió un error al guardar la calificación.");
+            mostrarModalError("Ocurrió un error al guardar la calificación.");
             console.error(err);
         });
     }
@@ -524,6 +544,72 @@
         document.querySelector('.btn-revisar')?.addEventListener('click', () => actualizarEstadoEntrega('REVISADO'));
         document.querySelector('.btn-desbloquear')?.addEventListener('click', () => actualizarEstadoEntrega('POR REVISAR'));
         document.getElementById('btnAnalizar')?.addEventListener('click', analizarYGenerarRetroalimentacion);
+    }
+
+    function mostrarToast(mensaje, tipo = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${tipo}`;
+        toast.innerText = mensaje;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('visible'), 10);
+        setTimeout(() => {
+            toast.classList.remove('visible');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    function mostrarModalConfirmacion(mensaje, onConfirmar) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-card">
+                <h3>Confirmar</h3>
+                <p>${mensaje}</p>
+                <div class="modal-actions">
+                    <button class="modal-btn-secondary" id="btnCancelarModal">Cancelar</button>
+                    <button class="modal-btn-primary" id="btnConfirmarModal">Confirmar</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.classList.add('visible'), 10);
+
+        overlay.querySelector('#btnCancelarModal').onclick = () => overlay.remove();
+        overlay.querySelector('#btnConfirmarModal').onclick = () => { onConfirmar(); overlay.remove(); };
+    }
+
+    function mostrarModalExito(mensaje) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-card">
+                <h3 style="color:#27ae60;">✅ Éxito</h3>
+                <p>${mensaje}</p>
+                <div class="modal-actions">
+                    <button class="modal-btn-success" id="btnCerrarModalExito">Aceptar</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.classList.add('visible'), 10);
+        overlay.querySelector('#btnCerrarModalExito').onclick = () => overlay.remove();
+    }
+
+    function mostrarModalError(mensaje) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal-card">
+                <h3 style="color:#c0392b;">❌ Error</h3>
+                <p>${mensaje}</p>
+                <div class="modal-actions">
+                    <button class="modal-btn-danger" id="btnCerrarModalError">Entendido</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.classList.add('visible'), 10);
+        overlay.querySelector('#btnCerrarModalError').onclick = () => overlay.remove();
     }
 
     inicializarEventos();
