@@ -173,9 +173,26 @@
 <div class="contenedor-principal">
     <!-- PANEL LATERAL: ALUMNOS Y ENTREGAS -->
     <div class="panel-lateral">
-        <div class="seccion-lista" style="height: 50%;">
-            <h3>Estudiantes Registrados</h3>
-            <div id="listaAlumnos"></div>
+        <div class="seccion-lista" style="height: 100%;">
+            <h3>📋 Gestión de Estudiantes</h3>
+            <div id="formularioEdicion" style="display:none; padding: 10px; overflow-y: auto; border-bottom: 1px solid #e0e0e0;">
+                <input type="text" id="editarIdAlumno" style="display:none;">
+                <input type="text" id="editarCedula" placeholder="Cédula" style="width:100%; padding:6px; margin-bottom:5px; box-sizing:border-box;">
+                <input type="text" id="editarApellidos" placeholder="Apellidos" style="width:100%; padding:6px; margin-bottom:5px; box-sizing:border-box;">
+                <input type="text" id="editarNombres" placeholder="Nombres" style="width:100%; padding:6px; margin-bottom:5px; box-sizing:border-box;">
+                <select id="editarParalelo" style="width:100%; padding:6px; margin-bottom:5px; box-sizing:border-box;">
+                    <option value="TERCERO INFORMATICA A">3ro Informática A</option>
+                    <option value="TERCERO INFORMATICA B">3ro Informática B</option>
+                </select>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-docente btn-revisar" id="btnGuardarAlumno" style="flex:1; font-size:12px; padding:8px;">💾 Guardar</button>
+                    <button class="btn-docente btn-desbloquear" id="btnCancelarEdicion" style="flex:1; font-size:12px; padding:8px;">❌ Cancelar</button>
+                </div>
+            </div>
+            <div class="seccion-lista" style="height: calc(100% - 40px);">
+                <h3 style="cursor:pointer;" onclick="toggleFormularioEdicion()">👥 Estudiantes Registrados</h3>
+                <div id="listaAlumnos"></div>
+            </div>
         </div>
         <div class="seccion-lista" style="height: 50%;">
             <h3>Historial de Proyectos</h3>
@@ -284,8 +301,14 @@
             const div = document.createElement('div');
             div.className = `item-alumno ${alumnoSeleccionado && alumnoSeleccionado.id === al.id ? 'seleccionado' : ''}`;
             div.innerHTML = `<div class="alumno-nombre">${al.apellidos}, ${al.nombres}</div>
-                             <div class="alumno-detalles">🔑 Contraseña: <b>${al.contrasena || 'S/N'}</b></div>`;
-            div.onclick = () => seleccionarAlumno(al);
+                             <div class="alumno-detalles">🔑 Contraseña: <b>${al.contrasena || 'S/N'}</b></div>
+                             <div style="margin-top:5px; display:flex; gap:5px;">
+                                <button class="btn-docente btn-revisar" style="font-size:10px; padding:4px 8px;" onclick="editarAlumno(${al.id})">✏️ Editar</button>
+                                <button class="btn-docente btn-desbloquear" style="font-size:10px; padding:4px 8px; background-color:#c0392b;" onclick="eliminarAlumno(${al.id})">🗑️ Eliminar</button>
+                             </div>`;
+            div.onclick = (e) => {
+                if (e.target.tagName !== 'BUTTON') seleccionarAlumno(al);
+            };
             contenedor.appendChild(div);
         });
     }
@@ -422,6 +445,97 @@
         document.getElementById('vistaTrabajo').style.display = 'none';
     }
 
+    function cargarFormularioAlumno(alumno = null) {
+        document.getElementById('editarIdAlumno').value = alumno ? alumno.id : '';
+        document.getElementById('editarCedula').value = alumno ? alumno.cedula : '';
+        document.getElementById('editarApellidos').value = alumno ? alumno.apellidos : '';
+        document.getElementById('editarNombres').value = alumno ? alumno.nombres : '';
+        document.getElementById('editarParalelo').value = alumno ? alumno.paralelo : document.getElementById('filtroCurso').value;
+        document.getElementById('btnGuardarAlumno').innerText = alumno ? '💾 Actualizar' : '➕ Crear';
+        document.getElementById('btnCancelarEdicion').style.display = alumno ? 'block' : 'none';
+        document.getElementById('formularioEdicion').style.display = alumno ? 'block' : 'none';
+    }
+
+    function toggleFormularioEdicion() {
+        const formulario = document.getElementById('formularioEdicion');
+        formulario.style.display = formulario.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function guardarAlumno() {
+        const id = document.getElementById('editarIdAlumno').value;
+        const cedula = document.getElementById('editarCedula').value.trim();
+        const apellidos = document.getElementById('editarApellidos').value.trim().toUpperCase();
+        const nombres = document.getElementById('editarNombres').value.trim().toUpperCase();
+        const paralelo = document.getElementById('editarParalelo').value;
+
+        if (!cedula || !apellidos || !nombres) {
+            mostrarModalError("Cédula, apellidos y nombres son obligatorios.");
+            return;
+        }
+
+        const esEdicion = !!id;
+        const url = esEdicion ? `${SUPABASE_URL}/rest/v1/alumnos?id=eq.${id}` : `${SUPABASE_URL}/rest/v1/alumnos`;
+        const metodo = esEdicion ? 'PATCH' : 'POST';
+
+        fetch(url, {
+            method: metodo,
+            headers: {
+                'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json', 'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({ cedula, apellidos, nombres, paralelo })
+        })
+        .then(res => {
+            if (!res.ok) return res.text().then(txt => { throw new Error(txt || `HTTP ${res.status}`); });
+            return res.json();
+        })
+        .then(() => {
+            mostrarToast(esEdicion ? 'Alumno actualizado correctamente.' : 'Alumno creado correctamente.', 'success');
+            cargarFormularioAlumno(null);
+            cargarAlumnos();
+        })
+        .catch(err => {
+            mostrarModalError(`Error al guardar alumno: ${err.message}`);
+            console.error(err);
+        });
+    }
+
+    function editarAlumno(id) {
+        const alumno = alumnos.find(a => a.id === id);
+        if (alumno) {
+            cargarFormularioAlumno(alumno);
+        }
+    }
+
+    function eliminarAlumno(id) {
+        mostrarModalConfirmacion("¿Estás seguro de que deseas eliminar este estudiante? Esta acción no se puede deshacer.", () => {
+            fetch(`${SUPABASE_URL}/rest/v1/alumnos?id=eq.${id}`, {
+                method: 'DELETE',
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
+            .then(() => {
+                mostrarToast('Alumno eliminado correctamente.', 'success');
+                if (alumnoSeleccionado && alumnoSeleccionado.id === id) {
+                    alumnoSeleccionado = null;
+                    limpiarVistaTrabajo();
+                }
+                cargarAlumnos();
+            })
+            .catch(err => {
+                mostrarModalError(`Error al eliminar alumno: ${err.message}`);
+                console.error(err);
+            });
+        });
+    }
+
+    function cancelarEdicionAlumno() {
+        cargarFormularioAlumno(null);
+    }
+
     function analizarYGenerarRetroalimentacion() {
         if (!entregaSeleccionada) return;
 
@@ -544,6 +658,8 @@
         document.querySelector('.btn-revisar')?.addEventListener('click', () => actualizarEstadoEntrega('REVISADO'));
         document.querySelector('.btn-desbloquear')?.addEventListener('click', () => actualizarEstadoEntrega('POR REVISAR'));
         document.getElementById('btnAnalizar')?.addEventListener('click', analizarYGenerarRetroalimentacion);
+        document.getElementById('btnGuardarAlumno')?.addEventListener('click', guardarAlumno);
+        document.getElementById('btnCancelarEdicion')?.addEventListener('click', cancelarEdicionAlumno);
     }
 
     function mostrarToast(mensaje, tipo = 'info') {
