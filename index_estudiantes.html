@@ -635,16 +635,17 @@
     }
 
     function guardarProyectoSupabase() {
+        const html = htmlEditor ? htmlEditor.getValue() : document.getElementById('txtHtml').value;
+        const css = cssEditor ? cssEditor.getValue() : document.getElementById('txtCss').value;
+        const js = jsEditor ? jsEditor.getValue() : document.getElementById('txtJs').value;
         const payload = {
             alumno_id: alumnoLogueado.id,
-            codigo_html: document.getElementById('txtHtml').value,
-            codigo_css: document.getElementById('txtCss').value,
-            codigo_js: document.getElementById('txtJs').value,
+            codigo_html: html,
+            codigo_css: css,
+            codigo_js: js,
             estado: "POR REVISAR",
             updated_at: new Date().toISOString()
         };
-
-        console.log("Guardando payload:", payload);
 
         const esEdicion = trabajoActualId !== null;
         const url = esEdicion ? `${SUPABASE_URL}/rest/v1/entregas_tareas?id=eq.${trabajoActualId}` : `${SUPABASE_URL}/rest/v1/entregas_tareas`;

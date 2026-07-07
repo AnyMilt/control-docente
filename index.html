@@ -96,6 +96,16 @@
         .badge { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .badge-pendiente { background-color: #ffeaa7; color: #d35400; }
         .badge-revisado { background-color: #badc58; color: #27ae60; }
+        .item-nuevo { animation: resaltar 2s ease-out; }
+        @keyframes resaltar {
+            0% { background-color: #f39c12; color: white; }
+            100% { background-color: transparent; }
+        }
+        .entrega-nueva { animation: resaltarEntrega 2s ease-out; }
+        @keyframes resaltarEntrega {
+            0% { background-color: #27ae60; color: white; }
+            100% { background-color: transparent; }
+        }
         /* Responsive */
         @media (max-width: 900px) {
             .contenedor-principal { flex-direction: column; }
@@ -259,6 +269,8 @@
     let alumnoSeleccionado = null;
     let entregaSeleccionada = null;
     let pestañaActiva = 'HTML';
+    let idsAlumnosConocidos = new Set();
+    let idsEntregasConocidas = new Set();
 
     // VALIDAR INICIO DE SESIÓN ADMINISTRATIVO
     function loginDocente() {
@@ -268,6 +280,7 @@
         if(claveIngresada === CLAVE_MAESTRA_DOCENTE) {
             document.getElementById('modalLoginDocente').style.display = 'none';
             cargarAlumnos(); // Descarga los datos iniciales una vez autenticado
+            iniciarSincronizacionDocente();
         } else {
             divError.style.display = 'block';
         }
@@ -283,9 +296,76 @@
         .then(res => res.json())
         .then(data => {
             alumnos = data || [];
+            idsAlumnosConocidos = new Set(alumnos.map(a => a.id));
             renderAlumnos();
             limpiarVistaTrabajo();
         });
+    }
+
+    function sincronizarAlumnos() {
+        const curso = document.getElementById('filtroCurso').value;
+        fetch(`${SUPABASE_URL}/rest/v1/alumnos?paralelo=eq.${encodeURIComponent(curso)}&order=apellidos.asc`, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+            const nuevosAlumnos = data || [];
+            const hayNuevos = nuevosAlumnos.some(a => !idsAlumnosConocidos.has(a.id));
+            
+            alumnos = nuevosAlumnos;
+            renderAlumnos();
+            
+            if (hayNuevos) {
+                const cantidad = nuevosAlumnos.filter(a => !idsAlumnosConocidos.has(a.id)).length;
+                mostrarToast(`📢 ${cantidad} estudiante(s) nuevo(s) registrado(s)`, 'info');
+                resaltarHeader('#f39c12');
+            }
+        })
+        .catch(err => console.error("Error en sincronización de alumnos:", err));
+    }
+
+    function sincronizarEntregas() {
+        if (!alumnoSeleccionado) return;
+        
+        fetch(`${SUPABASE_URL}/rest/v1/entregas_tareas?alumno_id=eq.${alumnoSeleccionado.id}&order=id.desc`, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+            const nuevasEntregas = data || [];
+            const entregasActualizadas = nuevasEntregas.filter(e => {
+                const anterior = entregas.find(ant => ant.id === e.id);
+                return !anterior || anterior.updated_at !== e.updated_at;
+            });
+            
+            if (entregasActualizadas.length > 0) {
+                entregas = nuevasEntregas;
+                renderEntregas();
+                resaltarHeader('#27ae60');
+                
+                if (entregaSeleccionada) {
+                    const actualizada = entregasActualizadas.find(e => e.id === entregaSeleccionada.id);
+                    if (actualizada) {
+                        cargarProyectoEnVisor(actualizada);
+                    }
+                }
+            }
+        })
+        .catch(err => console.error("Error en sincronización de entregas:", err));
+    }
+
+    function resaltarHeader(color) {
+        const header = document.querySelector('header');
+        header.style.transition = 'background-color 0.3s';
+        header.style.backgroundColor = color;
+        setTimeout(() => {
+            header.style.backgroundColor = '#2c3e50';
+        }, 2000);
+    }
+
+    function iniciarSincronizacionDocente() {
+        setInterval(sincronizarAlumnos, 5000);
+        setInterval(sincronizarEntregas, 5000);
     }
 
     function renderAlumnos() {
@@ -298,8 +378,9 @@
         }
 
         alumnos.forEach(al => {
+            const esNuevo = !idsAlumnosConocidos.has(al.id);
             const div = document.createElement('div');
-            div.className = `item-alumno ${alumnoSeleccionado && alumnoSeleccionado.id === al.id ? 'seleccionado' : ''}`;
+            div.className = `item-alumno ${alumnoSeleccionado && alumnoSeleccionado.id === al.id ? 'seleccionado' : ''} ${esNuevo ? 'item-nuevo' : ''}`;
             div.innerHTML = `<div class="alumno-nombre">${al.apellidos}, ${al.nombres}</div>
                              <div class="alumno-detalles">🔑 Contraseña: <b>${al.contrasena || 'S/N'}</b></div>
                              <div style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap;">
@@ -312,6 +393,8 @@
             };
             contenedor.appendChild(div);
         });
+
+        idsAlumnosConocidos = new Set(alumnos.map(a => a.id));
     }
 
     function seleccionarAlumno(al) {
@@ -325,6 +408,7 @@
         .then(res => res.json())
         .then(data => {
             entregas = data || [];
+            idsEntregasConocidas = new Set(entregas.map(e => e.id));
             renderEntregas();
         });
     }
@@ -340,8 +424,9 @@
         }
 
         entregas.forEach((ent, index) => {
+            const esNueva = !idsEntregasConocidas.has(ent.id);
             const li = document.createElement('li');
-            li.className = `item-entrega ${entregaSeleccionada && entregaSeleccionada.id === ent.id ? 'seleccionada' : ''}`;
+            li.className = `item-entrega ${entregaSeleccionada && entregaSeleccionada.id === ent.id ? 'seleccionada' : ''} ${esNueva ? 'entrega-nueva' : ''}`;
             
             const badgeClass = ent.estado === 'REVISADO' ? 'badge-revisado' : 'badge-pendiente';
             const badgeTexto = ent.estado === 'REVISADO' ? 'Revisado' : 'Pendiente';
@@ -351,6 +436,8 @@
             li.onclick = () => cargarProyectoEnVisor(ent);
             ul.appendChild(li);
         });
+
+        idsEntregasConocidas = new Set(entregas.map(e => e.id));
     }
 
     function cargarProyectoEnVisor(ent) {
