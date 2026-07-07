@@ -78,6 +78,8 @@
         .bloqueado { background-color: #e2e2e2 !important; color: #7f8c8d !important; cursor: not-allowed; }
         .btn-accion { background-color: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .btn-accion:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        .btn-cerrar-sesion { background-color: #c0392b; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-cambiar-contrasena { background-color: #8e44ad; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
 
         .CodeMirror {
             background-color: #1e1e1e !important;
@@ -118,6 +120,7 @@
             .toolbar { width: 100%; gap: 8px; }
             .toolbar select { flex: 1; min-width: 0; font-size: 12px; padding: 6px 8px; }
             .btn-accion { padding: 8px 10px; font-size: 13px; }
+            .btn-cerrar-sesion, .btn-cambiar-contrasena { padding: 8px 10px; font-size: 12px; }
             .contenedor-principal { height: calc(100vh - 140px); }
             .pestana { padding: 10px 8px; font-size: 12px; }
             .txt-editor { font-size: 12px; padding: 8px; }
@@ -132,6 +135,7 @@
             .toolbar { flex-direction: column; align-items: stretch; }
             .toolbar select { width: 100%; }
             .btn-accion { width: 100%; margin-left: 0 !important; }
+            .btn-cerrar-sesion, .btn-cambiar-contrasena { width: 100%; margin-left: 0 !important; margin-top: 4px; }
             .contenedor-principal { height: calc(100vh - 180px); }
             .pestana { padding: 8px 4px; font-size: 11px; }
             .txt-editor { font-size: 11px; padding: 6px; }
@@ -179,6 +183,19 @@
     </div>
 </div>
 
+<!-- VENTANA CAMBIAR CONTRASEÑA -->
+<div id="modalCambiarContrasena" class="pantalla-bloqueo" style="display: none;">
+    <div class="caja-autenticacion">
+        <h2 style="margin-top:0; color:#8e44ad;">Cambiar Contraseña</h2>
+        <input type="password" id="cambioContrasenaActual" placeholder="Contraseña Actual">
+        <input type="password" id="cambioContrasenaNueva" placeholder="Nueva Contraseña">
+        <input type="password" id="cambioContrasenaConfirmar" placeholder="Confirmar Nueva Contraseña">
+        <button class="btn-primario" style="background-color: #8e44ad;" onclick="cambiarContrasena()">Actualizar Contraseña</button>
+        <div id="cambioError" class="error-msg"></div>
+        <a class="enlace-cambio" onclick="ocultarModalCambiarContrasena()" style="color:#666;">Cancelar</a>
+    </div>
+</div>
+
 <!-- INTERFAZ DEL ENTORNO -->
 <header>
     <div>
@@ -191,6 +208,8 @@
         </select>
         <button class="btn-accion" onclick="crearNuevoTrabajo()">➕ Nuevo Proyecto</button>
         <button id="btnGuardar" class="btn-accion" style="background-color: #27ae60; margin-left:8px;" onclick="guardarProyectoSupabase()">💾 Guardar y Enviar</button>
+        <button class="btn-cambiar-contrasena" onclick="mostrarModalCambiarContrasena()">🔑 Cambiar Contraseña</button>
+        <button class="btn-cerrar-sesion" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
     </div>
 </header>
 
@@ -454,6 +473,95 @@
 
     function iniciarSincronizacion() {
         setInterval(sincronizarEntregas, 5000);
+    }
+
+    function cerrarSesion() {
+        if (confirm("¿Estás seguro de que quieres cerrar sesión?")) {
+            alumnoLogueado = null;
+            listadoTrabajos = [];
+            trabajoActualId = null;
+            document.getElementById('modalLogin').style.display = 'flex';
+            document.getElementById('lblEstudiante').innerText = 'Estudiante: Cargando...';
+            document.getElementById('lblCurso').innerText = '';
+            document.getElementById('loginApellidos').value = '';
+            document.getElementById('loginContrasena').value = '';
+        }
+    }
+
+    function mostrarModalCambiarContrasena() {
+        document.getElementById('modalCambiarContrasena').style.display = 'flex';
+        document.getElementById('cambioContrasenaActual').value = '';
+        document.getElementById('cambioContrasenaNueva').value = '';
+        document.getElementById('cambioContrasenaConfirmar').value = '';
+        document.getElementById('cambioError').style.display = 'none';
+    }
+
+    function ocultarModalCambiarContrasena() {
+        document.getElementById('modalCambiarContrasena').style.display = 'none';
+    }
+
+    function cambiarContrasena() {
+        const actual = document.getElementById('cambioContrasenaActual').value.trim();
+        const nueva = document.getElementById('cambioContrasenaNueva').value.trim();
+        const confirmar = document.getElementById('cambioContrasenaConfirmar').value.trim();
+        const divError = document.getElementById('cambioError');
+
+        if (!actual || !nueva || !confirmar) {
+            divError.innerText = "❌ Todos los campos son obligatorios.";
+            divError.style.display = 'block';
+            return;
+        }
+
+        if (nueva !== confirmar) {
+            divError.innerText = "❌ La nueva contraseña no coincide.";
+            divError.style.display = 'block';
+            return;
+        }
+
+        if (nueva.length < 4) {
+            divError.innerText = "❌ La contraseña debe tener al menos 4 caracteres.";
+            divError.style.display = 'block';
+            return;
+        }
+
+        hashPassword(actual, alumnoLogueado.cedula).then(hashedActual => {
+            return fetch(`${SUPABASE_URL}/rest/v1/alumnos?cedula=eq.${encodeURIComponent(alumnoLogueado.cedula)}&contrasena_hash=eq.${encodeURIComponent(hashedActual)}&limit=1`, {
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+            });
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            if (data.length === 0) {
+                throw new Error("La contraseña actual es incorrecta.");
+            }
+            return hashPassword(nueva, alumnoLogueado.cedula);
+        })
+        .then(hashedNueva => {
+            return fetch(`${SUPABASE_URL}/rest/v1/alumnos?id=eq.${alumnoLogueado.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json', 'Prefer': 'return=representation'
+                },
+                body: JSON.stringify({ contrasena_hash: hashedNueva })
+            });
+        })
+        .then(res => {
+            if (!res.ok) return res.text().then(txt => { throw new Error(txt || `HTTP ${res.status}`); });
+            return res.json();
+        })
+        .then(() => {
+            alert("✅ Contraseña actualizada con éxito.");
+            ocultarModalCambiarContrasena();
+        })
+        .catch(err => {
+            divError.innerText = `❌ ${err.message}`;
+            divError.style.display = 'block';
+            console.error(err);
+        });
     }
 
     function cargarTrabajoEspecifico(trb) {
