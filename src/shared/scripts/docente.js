@@ -13,12 +13,17 @@ let idsEntregasConocidas = new Set();
 function loginDocente() {
     const claveIngresada = document.getElementById('txtClaveMaestra').value.trim();
     const divError = document.getElementById('loginError');
+    console.log('[DOCENTE] loginDocente ejecutado, claveIngresada:', claveIngresada);
 
     if(claveIngresada === CLAVE_MAESTRA_DOCENTE) {
-        document.getElementById('modalLoginDocente').style.display = 'none';
+        console.log('[DOCENTE] Clave correcta, ocultando modal');
+        const modal = document.getElementById('modalLoginDocente');
+        console.log('[DOCENTE] modal encontrado:', !!modal);
+        modal.style.display = 'none';
         cargarAlumnos();
         iniciarSincronizacionDocente();
     } else {
+        console.log('[DOCENTE] Clave incorrecta');
         divError.style.display = 'block';
     }
 }
@@ -31,9 +36,22 @@ function cargarAlumnos() {
     .then(res => res.json())
     .then(data => {
         alumnos = data || [];
+        console.log('[DOCENTE] alumnos cargados:', alumnos.length, alumnos);
         idsAlumnosConocidos = new Set(alumnos.map(a => a.id));
-        renderAlumnos();
-        limpiarVistaTrabajo();
+        
+        Promise.all(alumnos.map(al => 
+            fetch(`${SUPABASE_URL}/rest/v1/entregas_tareas?alumno_id=eq.${al.id}&order=id.desc`, {
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+            })
+            .then(res => res.json())
+            .then(entregas => {
+                al.entregas = entregas || [];
+            })
+            .catch(() => { al.entregas = []; })
+        )).then(() => {
+            renderAlumnos();
+            limpiarVistaTrabajo();
+        });
     });
 }
 
@@ -46,8 +64,22 @@ function sincronizarAlumnos() {
     .then(data => {
         const nuevosAlumnos = data || [];
         const hayNuevos = nuevosAlumnos.some(a => !idsAlumnosConocidos.has(a.id));
+        
         alumnos = nuevosAlumnos;
-        renderAlumnos();
+        
+        Promise.all(alumnos.map(al => 
+            fetch(`${SUPABASE_URL}/rest/v1/entregas_tareas?alumno_id=eq.${al.id}&order=id.desc`, {
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+            })
+            .then(res => res.json())
+            .then(entregas => {
+                al.entregas = entregas || [];
+            })
+            .catch(() => { al.entregas = []; })
+        )).then(() => {
+            renderAlumnos();
+        });
+        
         if (hayNuevos) {
             const cantidad = nuevosAlumnos.filter(a => !idsAlumnosConocidos.has(a.id)).length;
             mostrarToast(`📢 ${cantidad} estudiante(s) nuevo(s) registrado(s)`, 'info');
@@ -73,9 +105,17 @@ function sincronizarEntregas() {
             entregas = nuevasEntregas;
             renderEntregas();
             resaltarHeader('#27ae60');
+            
+            if (alumnoSeleccionado) {
+                alumnoSeleccionado.entregas = nuevasEntregas;
+                renderAlumnos();
+            }
+            
             if (entregaSeleccionada) {
                 const actualizada = entregasActualizadas.find(e => e.id === entregaSeleccionada.id);
-                if (actualizada) cargarProyectoEnVisor(actualizada);
+                if (actualizada) {
+                    cargarProyectoEnVisor(actualizada);
+                }
             }
         }
     })
@@ -96,16 +136,25 @@ function iniciarSincronizacionDocente() {
 
 function renderAlumnos() {
     const contenedor = document.getElementById('listaAlumnos');
+    console.log('[DOCENTE] renderAlumnos, contenedor:', !!contenedor, 'alumnos:', alumnos.length);
+    if (!contenedor) return;
     contenedor.innerHTML = "";
+
     if(alumnos.length === 0) {
         contenedor.innerHTML = `<p style="padding: 15px; font-size:13px; color:#95a5a6; text-align:center;">Ningún alumno registrado en este paralelo.</p>`;
         return;
     }
+
     alumnos.forEach(al => {
         const esNuevo = !idsAlumnosConocidos.has(al.id);
+        const pendientes = (al.entregas || []).filter(e => e.estado !== 'REVISADO').length;
+        const badgePendientes = pendientes > 0 
+            ? `<span class="badge badge-pendiente" style="margin-left:8px;">📋 ${pendientes}</span>` 
+            : '';
+        
         const div = document.createElement('div');
         div.className = `item-alumno ${alumnoSeleccionado && alumnoSeleccionado.id === al.id ? 'seleccionado' : ''} ${esNuevo ? 'item-nuevo' : ''}`;
-        div.innerHTML = `<div class="alumno-nombre">${al.apellidos}, ${al.nombres}</div>
+        div.innerHTML = `<div class="alumno-nombre">${al.apellidos}, ${al.nombres} ${badgePendientes}</div>
                          <div class="alumno-detalles">🔑 Contraseña: <b>${al.contrasena || 'S/N'}</b></div>
                          <div style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap;">
                             <button class="btn-docente btn-revisar" style="font-size:10px; padding:4px 8px;" onclick="editarAlumno(${al.id})">✏️ Editar</button>
@@ -117,6 +166,7 @@ function renderAlumnos() {
         };
         contenedor.appendChild(div);
     });
+
     idsAlumnosConocidos = new Set(alumnos.map(a => a.id));
 }
 

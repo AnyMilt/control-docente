@@ -58,6 +58,30 @@ header h2 { margin: 0; font-size: 18px; }
 .btn-cerrar-sesion { background-color: #c0392b; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
 .btn-cambiar-contrasena { background-color: #8e44ad; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; }
 
+#badgePendientes {
+    display: inline-block !important;
+    background-color: #f39c12;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+    border: 2px solid #fff;
+    visibility: visible;
+    opacity: 1;
+}
+#badgePendientes.oculto {
+    display: none !important;
+    visibility: hidden;
+    opacity: 0;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 99999; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
 .modal-overlay.visible { opacity: 1; pointer-events: auto; }
 .modal-card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); max-width: 400px; width: 90%; text-align: center; transform: translateY(20px); transition: transform 0.2s; }

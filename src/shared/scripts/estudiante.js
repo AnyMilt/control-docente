@@ -134,10 +134,28 @@ function actualizarSelectorProyectos() {
     listadoTrabajos.forEach((trb, i) => {
         const option = document.createElement('option');
         option.value = trb.id;
-        option.textContent = `Proyecto #${listadoTrabajos.length - i} - ${trb.estado || 'POR REVISAR'}`;
+        const estado = trb.estado || 'POR REVISAR';
+        const icono = estado === 'REVISADO' ? '✅' : '⏳';
+        option.textContent = `Proyecto #${listadoTrabajos.length - i} - ${icono} ${estado}`;
         if (trabajoActualId === trb.id) option.selected = true;
         select.appendChild(option);
     });
+    actualizarBadgePendientes();
+}
+
+function actualizarBadgePendientes() {
+    const badge = document.getElementById('badgePendientes');
+    if (!badge) return;
+    const pendientes = listadoTrabajos.filter(t => {
+        const estado = (t.estado || '').toUpperCase().trim();
+        return estado !== 'REVISADO';
+    }).length;
+    badge.textContent = `📋 Pendientes: ${pendientes}`;
+    if (pendientes > 0) {
+        badge.classList.remove('oculto');
+    } else {
+        badge.classList.add('oculto');
+    }
 }
 
 function cargarEntregas() {
@@ -151,7 +169,8 @@ function cargarEntregas() {
     .then(data => {
         listadoTrabajos = data || [];
         actualizarSelectorProyectos();
-        if (listadoTrabajos.length > 0) {
+        actualizarBadgePendientes();
+        if(listadoTrabajos.length > 0) {
             const existe = listadoTrabajos.find(t => t.id === trabajoActualId);
             if (existe) cargarTrabajoEspecifico(existe);
             else cargarTrabajoEspecifico(listadoTrabajos[0]);
@@ -190,6 +209,7 @@ function sincronizarEntregas() {
                     mostrarIndicadorActualizacion();
                 }
             });
+            actualizarBadgePendientes();
         }
     })
     .catch(err => console.error("Error en sincronización:", err));

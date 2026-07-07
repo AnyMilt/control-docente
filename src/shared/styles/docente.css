@@ -89,8 +89,11 @@ iframe { width: 100%; flex-grow: 1; border: none; background: white; }
 .entrega-nueva { animation: resaltarEntrega 2s ease-out; }
 @keyframes resaltarEntrega {
     0% { background-color: #27ae60; color: white; }
-    100% { background-color: transparent; }
+     100% { background-color: transparent; }
 }
+
+.badge-pendiente { background-color: #ffeaa7; color: #d35400; }
+.badge-revisado { background-color: #badc58; color: #27ae60; }
 
 @media (max-width: 900px) {
     .contenedor-principal { flex-direction: column; }
