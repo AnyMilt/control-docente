@@ -133,8 +133,8 @@
     <div class="caja-autenticacion">
         <h2 style="margin-top:0; color:#2c3e50;">Acceso Administrativo</h2>
         <p style="color:#666; font-size:13px;">Panel de Control Docente - Informática</p>
-        <input type="password" id="txtClaveMaestra" placeholder="Introduce la Clave Docente" onkeydown="if(event.key === 'Enter') loginDocente()">
-        <button class="btn-primario" onclick="loginDocente()">Acceder al Panel</button>
+        <input type="password" id="txtClaveMaestra" placeholder="Introduce la Clave Docente">
+        <button class="btn-primario" id="btnLoginDocente">Acceder al Panel</button>
         <div id="loginError" class="error-msg">❌ Clave incorrecta. Inténtalo de nuevo.</div>
     </div>
 </div>
@@ -143,7 +143,7 @@
 <header>
     <h1>Panel Docente - U.E.M. Albertina Rivas Medina</h1>
     <div>
-        <select id="filtroCurso" class="filtro-curso" onchange="cargarAlumnos()">
+        <select id="filtroCurso" class="filtro-curso">
             <option value="TERCERO INFORMATICA A">3ro Informática A</option>
             <option value="TERCERO INFORMATICA B">3ro Informática B</option>
         </select>
@@ -174,10 +174,10 @@
             <div class="split-v">
                 <div class="col-codigo" style="position: relative; width: 100%; height: 100%;">
                     <div class="pestañas-codigo">
-                        <button class="tab-btn activo" id="btnHtml" onclick="cambiarPestaña('HTML')">HTML</button>
-                        <button class="tab-btn" id="btnCss" onclick="cambiarPestaña('CSS')">CSS</button>
-                        <button class="tab-btn" id="btnJs" onclick="cambiarPestaña('JS')">JavaScript</button>
-                        <button class="tab-btn" id="btnVista" onclick="cambiarPestaña('VISTA')">Ejecución</button>
+                        <button class="tab-btn activo" id="btnHtml">HTML</button>
+                        <button class="tab-btn" id="btnCss">CSS</button>
+                        <button class="tab-btn" id="btnJs">JavaScript</button>
+                        <button class="tab-btn" id="btnVista">Ejecución</button>
                     </div>
                     <div style="position: relative; flex: 1; overflow: hidden;">
                         <pre id="editorCodigo" class="code-viewer" style="position: absolute; inset: 0; display: block;"></pre>
@@ -197,8 +197,8 @@
                     <div style="text-align: center; margin-bottom: 5px;">
                         <span>Estado: </span><span id="lblEstadoProyecto" class="badge">PENDIENTE</span>
                     </div>
-                    <button class="btn-docente btn-revisar" onclick="actualizarEstadoEntrega('REVISADO')">✔️ Aprobar y Bloquear</button>
-                    <button class="btn-docente btn-desbloquear" onclick="actualizarEstadoEntrega('POR REVISAR')">🔓 Devolver para Corrección</button>
+                    <button class="btn-docente btn-revisar">✔️ Aprobar y Bloquear</button>
+                    <button class="btn-docente btn-desbloquear">🔓 Devolver para Corrección</button>
                 </div>
             </div>
         </div>
@@ -352,7 +352,8 @@
         const html = entregaSeleccionada.codigo_html || '';
         const css = entregaSeleccionada.codigo_css || '';
         const js = entregaSeleccionada.codigo_js || '';
-        iframe.srcdoc = `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+        const src = '<!DOCTYPE html><html><head><style>' + css + '</style></head><body>' + html + '<script>' + js + '<\/script></body></html>';
+        iframe.srcdoc = src;
     }
 
     function actualizarEstadoEntrega(nuevoEstado) {
@@ -395,6 +396,22 @@
         document.getElementById('vistaVacia').style.display = 'flex';
         document.getElementById('vistaTrabajo').style.display = 'none';
     }
+
+    function inicializarEventos() {
+        document.getElementById('txtClaveMaestra').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') loginDocente();
+        });
+        document.getElementById('btnLoginDocente').addEventListener('click', loginDocente);
+        document.getElementById('filtroCurso').addEventListener('change', cargarAlumnos);
+        document.getElementById('btnHtml')?.addEventListener('click', () => cambiarPestaña('HTML'));
+        document.getElementById('btnCss')?.addEventListener('click', () => cambiarPestaña('CSS'));
+        document.getElementById('btnJs')?.addEventListener('click', () => cambiarPestaña('JS'));
+        document.getElementById('btnVista')?.addEventListener('click', () => cambiarPestaña('VISTA'));
+        document.querySelector('.btn-revisar')?.addEventListener('click', () => actualizarEstadoEntrega('REVISADO'));
+        document.querySelector('.btn-desbloquear')?.addEventListener('click', () => actualizarEstadoEntrega('POR REVISAR'));
+    }
+
+    inicializarEventos();
 </script>
 </body>
 </html>

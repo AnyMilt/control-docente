@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal del Estudiante - U.E.M. Albertina Rivas Medina</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/css-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/javascript-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/html-hint.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif; margin: 0; padding: 0;
@@ -67,6 +78,38 @@
         .bloqueado { background-color: #e2e2e2 !important; color: #7f8c8d !important; cursor: not-allowed; }
         .btn-accion { background-color: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .btn-accion:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+
+        .CodeMirror {
+            background-color: #1e1e1e !important;
+            color: #d4d4d4 !important;
+            font-family: monospace !important;
+            font-size: 13px !important;
+            height: 100% !important;
+        }
+        .CodeMirror-gutters {
+            background-color: #1e1e1e !important;
+            border-right: 1px solid #333 !important;
+        }
+        .CodeMirror-hints {
+            background-color: #2d2d2d !important;
+            color: #fff !important;
+            border: 1px solid #555 !important;
+            font-family: monospace !important;
+            font-size: 13px !important;
+        }
+        .CodeMirror-hint {
+            color: #fff !important;
+        }
+        .CodeMirror-hint-active {
+            background-color: #3498db !important;
+            color: #fff !important;
+        }
+        .CodeMirror-cursor {
+            border-left: 2px solid #fff !important;
+        }
+        .CodeMirror-selected {
+            background-color: #264f78 !important;
+        }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -162,13 +205,13 @@
             </div>
             <div class="contenedor-pestanas">
                 <div id="panelHtml" class="panel-editor activo">
-                    <textarea id="txtHtml" class="txt-editor" oninput="renderLive()"></textarea>
+                    <textarea id="txtHtml" class="txt-editor"></textarea>
                 </div>
                 <div id="panelCss" class="panel-editor">
-                    <textarea id="txtCss" class="txt-editor" oninput="renderLive()"></textarea>
+                    <textarea id="txtCss" class="txt-editor"></textarea>
                 </div>
                 <div id="panelJs" class="panel-editor">
-                    <textarea id="txtJs" class="txt-editor" oninput="renderLive()"></textarea>
+                    <textarea id="txtJs" class="txt-editor"></textarea>
                 </div>
                 <div id="panelVista" class="panel-editor">
                     <iframe id="vpIframe" style="width:100%; flex:1; border:none; background:white;"></iframe>
@@ -198,6 +241,9 @@
     let alumnoLogueado = null;
     let listadoTrabajos = [];
     let trabajoActualId = null;
+    let htmlEditor = null;
+    let cssEditor = null;
+    let jsEditor = null;
 
     function cargarConfiguracion() {
         return fetch(`${SUPABASE_URL}/rest/v1/configuracion?clave=eq.codigo_registro_docente&limit=1`, {
@@ -413,9 +459,9 @@
     function cargarTrabajoEspecifico(trb) {
         trabajoActualId = trb.id;
         actualizarSelectorProyectos();
-        document.getElementById('txtHtml').value = trb.codigo_html || '';
-        document.getElementById('txtCss').value = trb.codigo_css || '';
-        document.getElementById('txtJs').value = trb.codigo_js || '';
+        if (htmlEditor) htmlEditor.setValue(trb.codigo_html || '');
+        if (cssEditor) cssEditor.setValue(trb.codigo_css || '');
+        if (jsEditor) jsEditor.setValue(trb.codigo_js || '');
         document.getElementById('txtObservaciones').innerText = trb.observaciones || "Sin comentarios del docente todavía.";
 
         const bloquear = trb.estado === "REVISADO";
@@ -445,9 +491,9 @@
         }
         trabajoActualId = null;
         actualizarSelectorProyectos();
-        document.getElementById('txtHtml').value = "<!-- Estructura tu HTML -->";
-        document.getElementById('txtCss').value = "/* Estilos CSS */";
-        document.getElementById('txtJs').value = "// Código JS";
+        if (htmlEditor) htmlEditor.setValue("<!-- Estructura tu HTML -->");
+        if (cssEditor) cssEditor.setValue("/* Estilos CSS */");
+        if (jsEditor) jsEditor.setValue("// Código JS");
         document.getElementById('txtObservaciones').innerText = "Guarda este nuevo trabajo para enviarlo a revisión.";
         
         const txts = [document.getElementById('txtHtml'), document.getElementById('txtCss'), document.getElementById('txtJs')];
@@ -496,11 +542,12 @@
     }
 
     function renderLive() {
-        const html = document.getElementById('txtHtml').value;
-        const css = document.getElementById('txtCss').value;
-        const js = document.getElementById('txtJs').value;
+        const html = htmlEditor ? htmlEditor.getValue() : document.getElementById('txtHtml').value;
+        const css = cssEditor ? cssEditor.getValue() : document.getElementById('txtCss').value;
+        const js = jsEditor ? jsEditor.getValue() : document.getElementById('txtJs').value;
         const iframe = document.getElementById('vpIframe');
-        iframe.srcdoc = `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}<script>${js}<\/script></body></html>`;
+        const src = '<!DOCTYPE html><html><head><style>' + css + '</style></head><body>' + html + '<script>' + js + '<\/script></body></html>';
+        iframe.srcdoc = src;
     }
 
     function cambiarPestana(tipo, el) {
@@ -511,6 +558,56 @@
         const panel = document.getElementById(mapa[tipo]);
         if (panel) panel.classList.add('activo');
         if (tipo === 'vista') renderLive();
+        
+        if (htmlEditor) { htmlEditor.refresh(); if (tipo === 'html') htmlEditor.focus(); }
+        if (cssEditor) { cssEditor.refresh(); if (tipo === 'css') cssEditor.focus(); }
+        if (jsEditor) { jsEditor.refresh(); if (tipo === 'js') jsEditor.focus(); }
+    }
+
+    function inicializarCodeMirror() {
+        if (typeof CodeMirror === 'undefined') return;
+
+        const panels = ['panelHtml', 'panelCss', 'panelJs'];
+        panels.forEach(id => {
+            const panel = document.getElementById(id);
+            if (panel) panel.style.visibility = 'visible';
+        });
+
+        htmlEditor = CodeMirror.fromTextArea(document.getElementById('txtHtml'), {
+            mode: 'htmlmixed',
+            lineNumbers: true,
+            extraKeys: {"Ctrl-Space": "autocomplete", "Tab": "autocomplete"},
+            hintOptions: { completeSingle: false }
+        });
+        htmlEditor.on('change', renderLive);
+
+        cssEditor = CodeMirror.fromTextArea(document.getElementById('txtCss'), {
+            mode: 'css',
+            lineNumbers: true,
+            extraKeys: {"Ctrl-Space": "autocomplete", "Tab": "autocomplete"},
+            hintOptions: { completeSingle: false }
+        });
+        cssEditor.on('change', renderLive);
+
+        jsEditor = CodeMirror.fromTextArea(document.getElementById('txtJs'), {
+            mode: 'javascript',
+            lineNumbers: true,
+            extraKeys: {"Ctrl-Space": "autocomplete", "Tab": "autocomplete"},
+            hintOptions: { completeSingle: false }
+        });
+        jsEditor.on('change', renderLive);
+
+        if (htmlEditor) htmlEditor.refresh();
+        if (cssEditor) cssEditor.refresh();
+        if (jsEditor) jsEditor.refresh();
+
+        renderLive();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', inicializarCodeMirror);
+    } else {
+        inicializarCodeMirror();
     }
 </script>
 </body>
