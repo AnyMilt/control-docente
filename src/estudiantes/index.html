@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal del Estudiante - U.E.M. Albertina Rivas Medina</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
+    <link rel="stylesheet" href="../shared/styles/estudiante.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/css-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/javascript-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/html-hint.min.js"></script>
+</head>
+<body>
+
+<!-- VENTANA LOGIN -->
+<div id="modalLogin" class="pantalla-bloqueo">
+    <div class="caja-autenticacion">
+        <h2 style="margin-top:0;">Iniciar Sesión</h2>
+        <p style="color:#666; font-size:13px; margin-bottom:20px;">Plataforma de Informática - Albertina Rivas Mediina</p>
+        <input type="text" id="loginApellidos" placeholder="Tu Cédula de Identidad">
+        <input type="password" id="loginContrasena" placeholder="Tu Contraseña Personal">
+        <button class="btn-primario" style="background-color: #2980b9;" onclick="loginEstudiante()">Entrar al Sistema</button>
+        <div id="loginError" class="error-msg">❌ Credenciales incorrectas o campos vacíos.</div>
+        <a class="enlace-cambio" onclick="alternarVentanas('REGISTRO')">¿Eres nuevo estudiante? Regístrate aquí</a>
+    </div>
+</div>
+
+<!-- VENTANA REGISTRO -->
+<div id="modalRegistro" class="pantalla-bloqueo" style="display: none;">
+    <div class="caja-autenticacion">
+        <h2 style="margin-top:0; color:#27ae60;">Registro de Estudiante</h2>
+        <p style="color:#666; font-size:13px;">Llena tus datos con cuidado en MAYÚSCULAS</p>
+        <div id="registroCargando" style="display:block; color:#7f8c8d; font-size:13px;">Cargando formulario...</div>
+        <div id="registroFormulario" style="display:none;">
+            <input type="text" id="regCedula" placeholder="Cédula de Identidad">
+            <input type="text" id="regApellidos" placeholder="Apellidos Completos">
+            <input type="text" id="regNombres" placeholder="Nombres Completos">
+            <select id="regCurso">
+                <option value="TERCERO INFORMATICA A">3ro Informática A</option>
+                <option value="TERCERO INFORMATICA B">3ro Informática B</option>
+            </select>
+            <input type="password" id="regContrasena" placeholder="Crea tu Contraseña Personal">
+            <input type="password" id="regCodigoClase" style="border: 1px solid #e74c3c; background-color: #fdf2f2;" placeholder="Código Dictado por el Docente">
+            
+            <button class="btn-primario" onclick="registrarEstudiante()">Finalizar Registro</button>
+        </div>
+        <div id="regError" class="error-msg"></div>
+        <a class="enlace-cambio" onclick="alternarVentanas('LOGIN')" style="color:#666;">Volver al Inicio de Sesión</a>
+    </div>
+</div>
+
+<!-- VENTANA CAMBIAR CONTRASEÑA -->
+<div id="modalCambiarContrasena" class="pantalla-bloqueo" style="display: none;">
+    <div class="caja-autenticacion">
+        <h2 style="margin-top:0; color:#8e44ad;">Cambiar Contraseña</h2>
+        <input type="password" id="cambioContrasenaActual" placeholder="Contraseña Actual">
+        <input type="password" id="cambioContrasenaNueva" placeholder="Nueva Contraseña">
+        <input type="password" id="cambioContrasenaConfirmar" placeholder="Confirmar Nueva Contraseña">
+        <button class="btn-primario" style="background-color: #8e44ad;" onclick="cambiarContrasena()">Actualizar Contraseña</button>
+        <div id="cambioError" class="error-msg"></div>
+        <a class="enlace-cambio" onclick="ocultarModalCambiarContrasena()" style="color:#666;">Cancelar</a>
+    </div>
+</div>
+
+<!-- INTERFAZ DEL ENTORNO -->
+<header>
+    <div>
+        <span id="lblEstudiante" style="font-weight: bold; font-size: 15px;">Estudiante: Cargando...</span>
+        <span id="lblCurso" style="margin-left: 15px; font-size: 13px; color: #bdc3c7;"></span>
+    </div>
+    <div class="toolbar">
+        <select id="selectProyecto" onchange="cambiarProyectoDesdeSelect()">
+            <option value="">-- Selecciona un Proyecto --</option>
+        </select>
+        <button class="btn-accion" onclick="crearNuevoTrabajo()">➕ Nuevo Proyecto</button>
+        <button id="btnGuardar" class="btn-accion" style="background-color: #27ae60; margin-left:8px;" onclick="guardarProyectoSupabase()">💾 Guardar y Enviar</button>
+        <button class="btn-cambiar-contrasena" onclick="mostrarModalCambiarContrasena()">🔑 Cambiar Contraseña</button>
+        <button class="btn-cerrar-sesion" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+    </div>
+</header>
+
+<div class="contenedor-principal">
+    <div class="area-trabajo">
+        <div class="seccion-editores">
+            <div class="pestanas-editor">
+                <div class="pestana activa" onclick="cambiarPestana('html', this)">HTML</div>
+                <div class="pestana" onclick="cambiarPestana('css', this)">CSS</div>
+                <div class="pestana" onclick="cambiarPestana('js', this)">JS</div>
+                <div class="pestana" onclick="cambiarPestana('vista', this)">Vista Ejecución</div>
+            </div>
+            <div class="contenedor-pestanas">
+                <div id="panelHtml" class="panel-editor activo">
+                    <textarea id="txtHtml" class="txt-editor"></textarea>
+                </div>
+                <div id="panelCss" class="panel-editor">
+                    <textarea id="txtCss" class="txt-editor"></textarea>
+                </div>
+                <div id="panelJs" class="panel-editor">
+                    <textarea id="txtJs" class="txt-editor"></textarea>
+                </div>
+                <div id="panelVista" class="panel-editor">
+                    <iframe id="vpIframe" style="width:100%; flex:1; border:none; background:white;"></iframe>
+                </div>
+            </div>
+        </div>
+        <div class="seccion-inferior">
+            <div class="panel-feedback">
+                <h4>📝 Correcciones del Profesor:</h4>
+                <div id="txtObservaciones" class="box-recomendacion">Sin comentarios del docente todavía.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <script src="../shared/scripts/estudiante.js"></script>
+</body>
+</html>

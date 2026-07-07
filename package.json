@@ -1,0 +1,18 @@
+{
+  "name": "control-docente",
+  "version": "1.0.0",
+  "description": "Sistema de control docente para entrega y revisión de proyectos de programación web",
+  "main": "src/docente/index.html",
+  "scripts": {
+    "start": "echo 'Abre src/docente/index.html en tu navegador'",
+    "test": "echo 'Verifica el checklist en tests/manual-checklist.md'"
+  },
+  "keywords": [
+    "supabase",
+    "codemirror",
+    "educacion",
+    "proyectos-web"
+  ],
+  "author": "Docente",
+  "license": "MIT"
+}
