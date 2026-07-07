@@ -192,13 +192,18 @@
                 <div class="box-comentarios">
                     <label id="lblEvaluacion">Retroalimentación para el Alumno:</label>
                     <textarea id="txtObservacionesDocente" placeholder="Escribe aquí las correcciones, felicitaciones o sugerencias de mejora..."></textarea>
+                    <div id="analisisSintaxis" style="margin-top:8px; padding:10px; background:#f8f9fa; border:1px solid #e0e0e0; border-radius:4px; font-size:12px; display:none;">
+                        <strong>📊 Análisis de sintaxis:</strong>
+                        <pre id="resultadoAnalisis" style="white-space:pre-wrap; margin:5px 0 0 0; font-family:monospace;"></pre>
+                    </div>
                 </div>
                 <div class="box-acciones">
                     <div style="text-align: center; margin-bottom: 5px;">
                         <span>Estado: </span><span id="lblEstadoProyecto" class="badge">PENDIENTE</span>
                     </div>
-                    <button class="btn-docente btn-revisar">✔️ Aprobar y Bloquear</button>
-                    <button class="btn-docente btn-desbloquear">🔓 Devolver para Corrección</button>
+                    <button class="btn-docente btn-revisar" onclick="actualizarEstadoEntrega('REVISADO')">✔️ Aprobar y Bloquear</button>
+                    <button class="btn-docente btn-desbloquear" onclick="actualizarEstadoEntrega('POR REVISAR')">🔓 Devolver para Corrección</button>
+                    <button class="btn-docente" id="btnAnalizar" style="background-color: #8e44ad;" onclick="analizarYGenerarRetroalimentacion()">🔍 Analizar Sintaxis</button>
                 </div>
             </div>
         </div>
@@ -397,6 +402,115 @@
         document.getElementById('vistaTrabajo').style.display = 'none';
     }
 
+    function analizarYGenerarRetroalimentacion() {
+        if (!entregaSeleccionada) return;
+
+        const html = entregaSeleccionada.codigo_html || '';
+        const css = entregaSeleccionada.codigo_css || '';
+        const js = entregaSeleccionada.codigo_js || '';
+        const resultados = [];
+
+        // HTML
+        const htmlErrores = analizarHTML(html);
+        if (htmlErrores.length === 0) resultados.push('✅ HTML: Estructura bien formada.');
+        else resultados.push('❌ HTML: ' + htmlErrores.join('; '));
+
+        // CSS
+        const cssErrores = analizarCSS(css);
+        if (cssErrores.length === 0) resultados.push('✅ CSS: Reglas bien formadas.');
+        else resultados.push('❌ CSS: ' + cssErrores.join('; '));
+
+        // JS
+        const jsErrores = analizarJS(js);
+        if (jsErrores.length === 0) resultados.push('✅ JavaScript: Sintaxis correcta.');
+        else resultados.push('❌ JavaScript: ' + jsErrores.join('; '));
+
+        document.getElementById('analisisSintaxis').style.display = 'block';
+        document.getElementById('resultadoAnalisis').innerText = resultados.join('\n');
+
+        const retroalimentacion = generarRetroalimentacion(html, css, js, htmlErrores, cssErrores, jsErrores);
+        document.getElementById('txtObservacionesDocente').value = retroalimentacion;
+    }
+
+    function analizarHTML(codigo) {
+        const errores = [];
+        const stack = [];
+        const sinCerrar = codigo.match(/<([a-zA-Z0-9]+)[^>]*>/g) || [];
+        const cerrados = codigo.match(/<\/([a-zA-Z0-9]+)>/g) || [];
+
+        const etiquetasAuto = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+
+        sinCerrar.forEach(tag => {
+            const nombre = tag.replace('<','').replace('>','').split(' ')[0].toLowerCase();
+            if (!etiquetasAuto.has(nombre) && !tag.endsWith('/>')) {
+                stack.push(nombre);
+            }
+        });
+
+        cerrados.forEach(tag => {
+            const nombre = tag.replace('</','').replace('>','').toLowerCase();
+            const last = stack[stack.length - 1];
+            if (last === nombre) stack.pop();
+            else if (stack.includes(nombre)) {
+                const idx = stack.lastIndexOf(nombre);
+                stack.splice(idx, 1);
+            }
+        });
+
+        if (stack.length > 0) errores.push(`Etiquetas sin cerrar: ${stack.join(', ')}`);
+        if ((codigo.match(/<html/gi) || []).length === 0 && codigo.trim().length > 0) errores.push('Falta etiqueta <html>');
+        if ((codigo.match(/<body/gi) || []).length === 0 && codigo.trim().length > 0) errores.push('Falta etiqueta <body>');
+        if ((codigo.match(/<head/gi) || []).length === 0 && codigo.trim().length > 0 && codigo.includes('<style')) errores.push('Falta etiqueta <head> si usas <style>');
+
+        return errores;
+    }
+
+    function analizarCSS(codigo) {
+        const errores = [];
+        const abiertas = (codigo.match(/\{/g) || []).length;
+        const cerradas = (codigo.match(/\}/g) || []).length;
+        if (abiertas !== cerradas) errores.push(`Llaves desbalanceadas: ${abiertas} abiertas, ${cerradas} cerradas`);
+        if (abiertas === 0 && cerradas === 0 && codigo.trim().length > 0) errores.push('No se detectaron reglas CSS con llaves');
+        return errores;
+    }
+
+    function analizarJS(codigo) {
+        const errores = [];
+        try {
+            new Function(codigo);
+        } catch (e) {
+            errores.push(e.message);
+        }
+        return errores;
+    }
+
+    function generarRetroalimentacion(html, css, js, htmlErrores, cssErrores, jsErrores) {
+        const partes = [];
+        partes.push('📋 Análisis automático del proyecto:\n');
+
+        partes.push('Estructura HTML:');
+        if (htmlErrores.length === 0) partes.push('- Estructura básica correcta.');
+        else partes.push('- Errores: ' + htmlErrores.join(', '));
+
+        partes.push('\nSintaxis CSS:');
+        if (cssErrores.length === 0) partes.push('- Reglas bien formadas.');
+        else partes.push('- Errores: ' + cssErrores.join(', '));
+
+        partes.push('\nSintaxis JavaScript:');
+        if (jsErrores.length === 0) partes.push('- Sintaxis correcta.');
+        else partes.push('- Errores: ' + jsErrores.join(', '));
+
+        partes.push('\n💡 Observaciones generales:');
+        if (!html.trim()) partes.push('- El HTML está vacío.');
+        if (!css.trim()) partes.push('- El CSS está vacío.');
+        if (!js.trim()) partes.push('- El JS está vacío.');
+        if (html.trim() && css.trim() && js.trim() && htmlErrores.length === 0 && cssErrores.length === 0 && jsErrores.length === 0) {
+            partes.push('- Muy bien, el código base cumple con la estructura mínima solicitada.');
+        }
+
+        return partes.join('\n');
+    }
+
     function inicializarEventos() {
         document.getElementById('txtClaveMaestra').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') loginDocente();
@@ -409,6 +523,7 @@
         document.getElementById('btnVista')?.addEventListener('click', () => cambiarPestaña('VISTA'));
         document.querySelector('.btn-revisar')?.addEventListener('click', () => actualizarEstadoEntrega('REVISADO'));
         document.querySelector('.btn-desbloquear')?.addEventListener('click', () => actualizarEstadoEntrega('POR REVISAR'));
+        document.getElementById('btnAnalizar')?.addEventListener('click', analizarYGenerarRetroalimentacion);
     }
 
     inicializarEventos();
