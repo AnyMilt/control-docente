@@ -64,7 +64,20 @@ function registrarEstudiante() {
         return;
     }
 
-    hashPassword(contrasena, cedula).then(hashedPassword => {
+    fetch(`${SUPABASE_URL}/rest/v1/alumnos?cedula=eq.${encodeURIComponent(cedula)}&limit=1`, {
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+    })
+    .then(data => {
+        if (data.length > 0) {
+            throw new Error("Esta cédula ya está registrada. Usá el login o recuperá tu contraseña.");
+        }
+        return hashPassword(contrasena, cedula);
+    })
+    .then(hashedPassword => {
         return fetch(`${SUPABASE_URL}/rest/v1/alumnos`, {
             method: 'POST',
             headers: {

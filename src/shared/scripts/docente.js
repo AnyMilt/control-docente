@@ -315,16 +315,37 @@ function guardarAlumno() {
         return;
     }
     const esEdicion = !!id;
-    const url = esEdicion ? `${SUPABASE_URL}/rest/v1/alumnos?id=eq.${id}` : `${SUPABASE_URL}/rest/v1/alumnos`;
-    const metodo = esEdicion ? 'PATCH' : 'POST';
-    fetch(url, {
-        method: metodo,
-        headers: {
-            'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json', 'Prefer': 'return=representation'
-        },
-        body: JSON.stringify({ cedula, apellidos, nombres, paralelo })
-    })
+    if (!esEdicion) {
+        fetch(`${SUPABASE_URL}/rest/v1/alumnos?cedula=eq.${encodeURIComponent(cedula)}&limit=1`, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            if (data.length > 0) {
+                throw new Error("Ya existe un alumno registrado con esa cédula.");
+            }
+            return fetch(url, {
+                method: metodo,
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json', 'Prefer': 'return=representation'
+                },
+                body: JSON.stringify({ cedula, apellidos, nombres, paralelo })
+            });
+        })
+    } else {
+        return fetch(url, {
+            method: metodo,
+            headers: {
+                'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json', 'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({ cedula, apellidos, nombres, paralelo })
+        });
+    }
     .then(res => {
         if (!res.ok) return res.text().then(txt => { throw new Error(txt || `HTTP ${res.status}`); });
         return res.json();
