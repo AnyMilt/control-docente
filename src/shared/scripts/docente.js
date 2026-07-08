@@ -315,8 +315,19 @@ function guardarAlumno() {
         return;
     }
     const esEdicion = !!id;
-    if (!esEdicion) {
-        fetch(`${SUPABASE_URL}/rest/v1/alumnos?cedula=eq.${encodeURIComponent(cedula)}&limit=1`, {
+    const url = esEdicion ? `${SUPABASE_URL}/rest/v1/alumnos?id=eq.${id}` : `${SUPABASE_URL}/rest/v1/alumnos`;
+    const metodo = esEdicion ? 'PATCH' : 'POST';
+
+    const peticion = esEdicion
+        ? Promise.resolve(fetch(url, {
+            method: metodo,
+            headers: {
+                'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json', 'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({ cedula, apellidos, nombres, paralelo })
+        }))
+        : fetch(`${SUPABASE_URL}/rest/v1/alumnos?cedula=eq.${encodeURIComponent(cedula)}&limit=1`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         })
         .then(res => {
@@ -335,30 +346,22 @@ function guardarAlumno() {
                 },
                 body: JSON.stringify({ cedula, apellidos, nombres, paralelo })
             });
-        })
-    } else {
-        return fetch(url, {
-            method: metodo,
-            headers: {
-                'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'Content-Type': 'application/json', 'Prefer': 'return=representation'
-            },
-            body: JSON.stringify({ cedula, apellidos, nombres, paralelo })
         });
-    }
-    .then(res => {
-        if (!res.ok) return res.text().then(txt => { throw new Error(txt || `HTTP ${res.status}`); });
-        return res.json();
-    })
-    .then(() => {
-        mostrarToast(esEdicion ? 'Alumno actualizado correctamente.' : 'Alumno creado correctamente.', 'success');
-        cargarFormularioAlumno(null);
-        cargarAlumnos();
-    })
-    .catch(err => {
-        mostrarModalError(`Error al guardar alumno: ${err.message}`);
-        console.error(err);
-    });
+
+    peticion
+        .then(res => {
+            if (!res.ok) return res.text().then(txt => { throw new Error(txt || `HTTP ${res.status}`); });
+            return res.json();
+        })
+        .then(() => {
+            mostrarToast(esEdicion ? 'Alumno actualizado correctamente.' : 'Alumno creado correctamente.', 'success');
+            cargarFormularioAlumno(null);
+            cargarAlumnos();
+        })
+        .catch(err => {
+            mostrarModalError(`Error al guardar alumno: ${err.message}`);
+            console.error(err);
+        });
 }
 
 function editarAlumno(id) {
