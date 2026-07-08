@@ -564,3 +564,7 @@ function cambiarContrasena() {
         console.error(err);
     });
 }
+
+function abrirPaginaCompleta() {
+    window.open(window.location.href, '_blank', 'noopener');
+}

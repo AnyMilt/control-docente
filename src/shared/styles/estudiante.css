@@ -152,3 +152,28 @@ header h2 { margin: 0; font-size: 18px; }
     .panel-feedback { padding: 8px; }
     .box-recomendacion { font-size: 11px; padding: 6px; }
 }
+
+#btnFlotantePantallaCompleta {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: #7f8c8d;
+    color: white;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+#btnFlotantePantallaCompleta:active {
+    transform: scale(0.95);
+    background-color: #636e72;
+}
