@@ -142,38 +142,94 @@ header h2 { margin: 0; font-size: 18px; }
 @media (max-width: 480px) {
     header { padding: 8px; gap: 8px; }
     header h2 { font-size: 14px; }
-    .toolbar { flex-direction: column; align-items: stretch; }
-    .toolbar select { width: 100%; }
-    .btn-accion { width: 100%; margin-left: 0 !important; }
-    .btn-cerrar-sesion, .btn-cambiar-contrasena { width: 100%; margin-left: 0 !important; margin-top: 4px; }
-    .contenedor-principal { height: calc(100vh - 180px); }
+    .toolbar {
+        flex-direction: row !important;
+        align-items: center;
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+    }
+    .toolbar::-webkit-scrollbar { display: none; }
+    .toolbar select { width: auto; min-width: 140px; flex-shrink: 0; font-size: 11px; padding: 6px 8px; }
+    .btn-accion { width: auto; margin-left: 0 !important; flex-shrink: 0; padding: 8px 10px; font-size: 12px; }
+    .btn-cerrar-sesion, .btn-cambiar-contrasena { width: auto; margin-left: 0 !important; flex-shrink: 0; padding: 8px 10px; font-size: 11px; }
+    .contenedor-principal { height: calc(100vh - 120px); }
     .pestana { padding: 8px 4px; font-size: 11px; }
     .txt-editor { font-size: 11px; padding: 6px; }
     .panel-feedback { padding: 8px; }
     .box-recomendacion { font-size: 11px; padding: 6px; }
 }
 
-#btnFlotantePantallaCompleta {
+.fab-menu {
     position: fixed;
     bottom: 20px;
     right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+.fab-menu.activo .fab-item {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+}
+.fab-trigger {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background-color: #7f8c8d;
+    background-color: #2c3e50;
     color: white;
     border: none;
-    font-size: 22px;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-    z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    transition: transform 0.2s, background-color 0.2s;
 }
-#btnFlotantePantallaCompleta:active {
-    transform: scale(0.95);
-    background-color: #636e72;
+.fab-trigger:active { transform: scale(0.95); background-color: #1a252f; }
+.fab-trigger .icon-menu,
+.fab-trigger .icon-close {
+    transition: opacity 0.2s, transform 0.2s;
+    position: absolute;
 }
+.fab-trigger .icon-close { opacity: 0; transform: rotate(-90deg); }
+.fab-menu.activo .fab-trigger .icon-menu { opacity: 0; transform: rotate(90deg); }
+.fab-menu.activo .fab-trigger .icon-close { opacity: 1; transform: rotate(0deg); }
+
+.fab-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #2c3e50;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    white-space: nowrap;
+    min-width: 180px;
+    justify-content: flex-end;
+    text-align: right;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px) scale(0.95);
+    transition: opacity 0.2s, transform 0.2s;
+}
+.fab-menu.activo .fab-item {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+}
+.fab-item:active { background-color: #1a252f; }
+
+.fab-label { display: inline-block; }

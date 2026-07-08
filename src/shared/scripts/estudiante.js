@@ -129,6 +129,7 @@ function loginEstudiante() {
             document.getElementById('modalLogin').style.display = 'none';
             cargarEntregas();
             iniciarSincronizacion();
+            actualizarVisibilidadFab();
         } else {
             divError.innerText = "❌ Credenciales incorrectas.";
             divError.style.display = 'block';
@@ -349,6 +350,46 @@ function renderLive() {
     iframe.srcdoc = src;
 }
 
+function toggleMenuMovil() {
+    const menu = document.getElementById('menuMovil');
+    if (menu) menu.classList.toggle('activo');
+}
+
+function toggleMenuDrawer() {
+    const drawer = document.getElementById('menuDrawer');
+    const overlay = document.getElementById('menuDrawerOverlay');
+    if (drawer && overlay) {
+        const activo = drawer.classList.contains('activo');
+        if (activo) {
+            drawer.classList.remove('activo');
+            overlay.classList.remove('activo');
+        } else {
+            drawer.classList.add('activo');
+            overlay.classList.add('activo');
+            actualizarHeaderDrawer();
+        }
+    }
+}
+
+function cerrarMenuDrawer() {
+    const drawer = document.getElementById('menuDrawer');
+    const overlay = document.getElementById('menuDrawerOverlay');
+    if (drawer) drawer.classList.remove('activo');
+    if (overlay) overlay.classList.remove('activo');
+}
+
+function actualizarHeaderDrawer() {
+    const lblEst = document.getElementById('lblEstudianteDrawer');
+    const lblCur = document.getElementById('lblCursoDrawer');
+    if (lblEst && alumnoLogueado) lblEst.innerText = `${alumnoLogueado.apellidos}, ${alumnoLogueado.nombres}`;
+    if (lblCur && alumnoLogueado) lblCur.innerText = alumnoLogueado.paralelo || '';
+}
+
+function abrirPaginaCompleta() {
+    cerrarMenuDrawer();
+    window.open(window.location.href, '_blank', 'noopener');
+}
+
 function cambiarPestana(tipo, el) {
     document.querySelectorAll('.pestana').forEach(p => p.classList.remove('activa'));
     document.querySelectorAll('.panel-editor').forEach(p => p.classList.remove('activo'));
@@ -498,7 +539,31 @@ function cerrarSesion() {
         document.getElementById('loginApellidos').value = '';
         document.getElementById('loginContrasena').value = '';
         mostrarToast('Sesión cerrada correctamente', 'info');
+        actualizarVisibilidadFab();
     });
+}
+
+function actualizarVisibilidadFab() {
+    const fab = document.getElementById('fabMenu');
+    if (fab) {
+        fab.style.display = alumnoLogueado ? 'flex' : 'none';
+        if (!alumnoLogueado) fab.classList.remove('activo');
+    }
+}
+
+function toggleMenuFab() {
+    const fab = document.getElementById('fabMenu');
+    if (fab) fab.classList.toggle('activo');
+}
+
+function cerrarMenuFab() {
+    const fab = document.getElementById('fabMenu');
+    if (fab) fab.classList.remove('activo');
+}
+
+function abrirPaginaCompleta() {
+    cerrarMenuFab();
+    window.open(window.location.href, '_blank', 'noopener');
 }
 
 function cambiarContrasena() {
@@ -566,5 +631,8 @@ function cambiarContrasena() {
 }
 
 function abrirPaginaCompleta() {
+    cerrarMenuFab();
     window.open(window.location.href, '_blank', 'noopener');
 }
+
+actualizarVisibilidadFab();
