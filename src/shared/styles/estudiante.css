@@ -102,41 +102,107 @@ header h2 { margin: 0; font-size: 18px; }
 .toast-info { background-color: #2980b9; }
 
 .CodeMirror {
-    background-color: #1e1e1e !important;
-    color: #d4d4d4 !important;
+    background-color: #282c34 !important;
+    color: #ffffff !important;
     font-family: monospace !important;
     font-size: 13px !important;
     height: 100% !important;
 }
 .CodeMirror-gutters {
-    background-color: #1e1e1e !important;
-    border-right: 1px solid #333 !important;
+    background-color: #282c34 !important;
+    border-right: 1px solid #3a3f4b !important;
 }
 .CodeMirror-hints {
-    background-color: #2d2d2d !important;
+    background-color: #353b48 !important;
     color: #fff !important;
-    border: 1px solid #555 !important;
+    border: 1px solid #525966 !important;
     font-family: monospace !important;
     font-size: 13px !important;
 }
 .CodeMirror-hint { color: #fff !important; }
-.CodeMirror-hint-active { background-color: #3498db !important; color: #fff !important; }
-.CodeMirror-cursor { border-left: 2px solid #fff !important; }
-.CodeMirror-selected { background-color: #264f78 !important; }
+.CodeMirror-hint-active { background-color: #3b8eea !important; color: #ffffff !important; }
+.CodeMirror-cursor { border-left: 2px solid #528bff !important; }
+.CodeMirror-selected { background-color: #3e4451 !important; }
 
-@media (max-width: 768px) {
-    header { padding: 10px; gap: 10px; }
-    header h2 { font-size: 16px; }
-    .toolbar { width: 100%; gap: 8px; }
-    .toolbar select { flex: 1; min-width: 0; font-size: 12px; padding: 6px 8px; }
-    .btn-accion { padding: 8px 10px; font-size: 13px; }
-    .btn-cerrar-sesion, .btn-cambiar-contrasena { padding: 8px 10px; font-size: 12px; }
-    .contenedor-principal { height: calc(100vh - 140px); }
-    .pestana { padding: 10px 8px; font-size: 12px; }
-    .txt-editor { font-size: 12px; padding: 8px; }
-    .panel-feedback { padding: 10px; }
-    .panel-feedback h4 { font-size: 13px; }
-    .box-recomendacion { font-size: 12px; padding: 8px; }
+.cm-s-default .cm-keyword { color: #c678dd; font-weight: bold; }
+.cm-s-default .cm-number { color: #d19a66; }
+.cm-s-default .cm-atom { color: #d19a66; }
+.cm-s-default .cm-string { color: #98c379; }
+.cm-s-default .cm-string-2 { color: #98c379; }
+.cm-s-default .cm-comment { color: #5c6370; font-style: italic; }
+.cm-s-default .cm-meta { color: #e5c07b; }
+.cm-s-default .cm-tag { color: #ff7b86; }
+.cm-s-default .cm-attribute { color: #ffb86c; }
+.cm-s-default .cm-property { color: #56b6c2; }
+.cm-s-default .cm-variable { color: #ff7b86; }
+.cm-s-default .cm-variable-2 { color: #e5c07b; }
+.cm-s-default .cm-variable-3 { color: #4dc9f6; }
+.cm-s-default .cm-type { color: #4dc9f6; }
+.cm-s-default .cm-builtin { color: #56b6c2 !important; }
+.CodeMirror-line {
+    color: #ffffff !important;
+}
+
+.cm-m-css .cm-selector { color: #ff7b86 !important; }
+.cm-m-css .cm-property { color: #56b6c2 !important; }
+.cm-m-css .cm-string { color: #98c379 !important; }
+.cm-m-css .cm-atom { color: #d19a66 !important; }
+.cm-m-css .cm-number { color: #d19a66 !important; }
+.cm-m-css .cm-keyword { color: #c678dd !important; font-weight: bold; }
+.cm-m-css .cm-comment { color: #5c6370 !important; font-style: italic; }
+.cm-m-css .cm-variable { color: #e5c07b !important; }
+.cm-m-css .cm-variable-2 { color: #ff7b86 !important; }
+.cm-m-css .cm-variable-3 { color: #4dc9f6 !important; }
+.cm-m-css .cm-type { color: #4dc9f6 !important; }
+.cm-m-css .cm-meta { color: #e5c07b !important; }
+.cm-m-css .cm-qualifier { color: #d19a66 !important; }
+.cm-m-css .cm-builtin { color: #4dc9f6 !important; }
+.cm-m-css .cm-def { color: #61afef !important; }
+
+.cm-m-css .cm-selector { color: #ff7b86 !important; }
+.cm-m-css .cm-property { color: #56b6c2 !important; }
+.cm-m-css .cm-string { color: #98c379 !important; }
+.cm-m-css .cm-atom { color: #d19a66 !important; }
+.cm-m-css .cm-number { color: #d19a66 !important; }
+.cm-m-css .cm-keyword { color: #c678dd !important; }
+.cm-m-css .cm-comment { color: #5c6370 !important; font-style: italic; }
+.cm-m-css .cm-variable { color: #e5c07b !important; }
+.cm-m-css .cm-variable-2 { color: #ff7b86 !important; }
+.cm-m-css .cm-variable-3 { color: #4dc9f6 !important; }
+.cm-m-css .cm-type { color: #4dc9f6 !important; }
+.cm-m-css .cm-builtin { color: #4dc9f6 !important; }
+
+.cm-m-html .cm-tag { color: #ff7b86 !important; }
+.cm-m-html .cm-attribute { color: #ffb86c !important; }
+.cm-m-html .cm-string { color: #98c379 !important; }
+.cm-m-html .cm-comment { color: #5c6370 !important; font-style: italic; }
+
+.CodeMirror-line {
+    color: #ffffff !important;
+}
+
+.CodeMirror pre {
+    color: #ffffff !important;
+}
+
+.cm-m-css .cm-attribute { color: #ffffff !important; }
+
+.cm-s-default .cm-special {
+    color: #ff7b86 !important;
+}
+
+.CodeMirror-line {
+    color: #ffffff !important;
+}
+
+.CodeMirror pre {
+    color: #ffffff !important;
+}
+
+.cm-m-html .cm-atom,
+.cm-m-html .cm-number,
+.cm-m-html .cm-special {
+    color: #d19a66 !important;
 }
 
 @media (max-width: 480px) {
